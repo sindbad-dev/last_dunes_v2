@@ -1,6 +1,6 @@
 Utilise :
 
-
+lit la description du jeux readme.md
 le fichier file_struct.txt pour créer l'arborescence
 les fichiers présent pour t'inspirer 
 la structure JSON fournie pour générer la logique de la 'Jauge de Catastrophe'.
@@ -8,5 +8,6 @@ la structure JSON fournie pour générer la logique de la 'Jauge de Catastrophe'
     Si catastropheLevel == 3, la prochaine interaction ignore le choix du joueur et force fail_catastrophic.
 
     Assure-toi que le mouvement sur la carte (canvas) utilise les coordonnées X/Y du JSON.
+
 
     L'arbre final (Yggdrasil) doit simplement lister l'historique contenu dans gameLogic.history sous forme visuelle HTML."
