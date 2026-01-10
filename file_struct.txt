@@ -1,0 +1,19 @@
+/last-dunes-prototype
+│
+├── index.html              # Point d'entrée, conteneur du canvas et de l'UI
+│
+├── assets/
+│   ├── lastdunes1.jpg      # Votre image de battlemap (Image 1)
+│   └── sprites.png         # (Placeholder pour l'avatar)
+│
+├── css/
+│   └── style.css           # Styles pour la vue isométrique/top-down, l'UI, et les Cartes
+│
+├── data/
+│   └── level1.json         # Les données extraites de l'image + les définitions des challenges
+│
+└── js/
+    ├── main.js             # Initialisation et boucle principale
+    ├── mapEngine.js        # Gestion de l'affichage de la carte et mouvement avatar
+    ├── gameLogic.js        # Gestion de la Jauge de Catastrophe et résolution des cartes
+    └── uiManager.js        # Gestion des bulles de dialogues, deck de cartes et arbre Yggdrasil
