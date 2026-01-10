@@ -1,8 +1,18 @@
 body { margin: 0; background: #222; font-family: 'Courier New', monospace; color: white; }
 #game-container { position: relative; width: 800px; height: 800px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
 
+/* Canvas */
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    background: #2a2a2a;
+    z-index: 1;
+}
+
 /* HUD & Jauge */
-#ui-hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; }
+#ui-hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 5; }
 .gauge-bar { display: flex; gap: 5px; margin-top: 5px; }
 .gauge-segment { width: 30px; height: 20px; background: #444; border: 1px solid #777; }
 .gauge-segment.active { background: #ff4444; box-shadow: 0 0 10px #ff0000; }
