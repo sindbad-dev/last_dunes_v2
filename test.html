@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test - Last Dunes</title>
+    <style>
+        body {
+            background: #222;
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0ff; }
+        pre { background: #000; padding: 10px; border: 1px solid #555; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Diagnostic - Last Dunes</h1>
+
+    <h2>1. Vérification des fichiers</h2>
+    <div id="file-check">Chargement...</div>
+
+    <h2>2. Données JSON</h2>
+    <pre id="json-data">Chargement...</pre>
+
+    <h2>3. Canvas Test</h2>
+    <canvas id="testCanvas" width="400" height="300" style="border: 2px solid #0f0; background: #000;"></canvas>
+
+    <h2>4. Scripts JS</h2>
+    <div id="scripts-check">Vérification...</div>
+
+    <script>
+        const log = (selector, message, type = 'info') => {
+            const el = document.querySelector(selector);
+            el.innerHTML += `<div class="${type}">${message}</div>`;
+        };
+
+        // Test 1: Vérification des fichiers
+        log('#file-check', '✓ test.html chargé', 'success');
+
+        // Test 2: Chargement du JSON
+        fetch('data/level1.json')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                log('#file-check', '✓ data/level1.json chargé', 'success');
+                document.getElementById('json-data').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                log('#file-check', '✗ Erreur JSON: ' + error.message, 'error');
+                document.getElementById('json-data').textContent = 'Erreur: ' + error.message;
+            });
+
+        // Test 3: Canvas
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(10, 10, 50, 50);
+        ctx.fillStyle = '#fff';
+        ctx.font = '20px monospace';
+        ctx.fillText('Canvas OK!', 80, 40);
+
+        log('#file-check', '✓ Canvas 2D fonctionne', 'success');
+
+        // Test 4: Vérification des scripts
+        const scripts = [
+            'js/uiManager.js',
+            'js/gameLogic.js',
+            'js/mapEngine.js',
+            'js/main.js'
+        ];
+
+        scripts.forEach(script => {
+            fetch(script)
+                .then(response => {
+                    if (response.ok) {
+                        log('#scripts-check', `✓ ${script}`, 'success');
+                    } else {
+                        log('#scripts-check', `✗ ${script} (${response.status})`, 'error');
+                    }
+                })
+                .catch(error => {
+                    log('#scripts-check', `✗ ${script} - ${error.message}`, 'error');
+                });
+        });
+
+        // Test 5: Vérification du CSS
+        fetch('css/style.css')
+            .then(response => {
+                if (response.ok) {
+                    log('#file-check', '✓ css/style.css chargé', 'success');
+                } else {
+                    log('#file-check', '✗ CSS introuvable', 'error');
+                }
+            })
+            .catch(error => {
+                log('#file-check', '✗ Erreur CSS: ' + error.message, 'error');
+            });
+
+        setTimeout(() => {
+            log('#file-check', '<br><strong class="info">Si tous les tests sont verts, ouvrez index.html</strong>', 'info');
+        }, 2000);
+    </script>
+</body>
+</html>
