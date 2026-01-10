@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Éditeur de Niveaux - Last Dunes</title>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+        }
+
+        #canvas-area {
+            flex: 1;
+        }
+
+        #sidebar {
+            width: 350px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #gameCanvas {
+            border: 2px solid #555;
+            background: #2a2a2a;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .tool-section h3 {
+            margin-top: 0;
+            color: #ffd700;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px 5px 5px 0;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button.delete {
+            background: #f44336;
+        }
+
+        button.delete:hover {
+            background: #da190b;
+        }
+
+        .challenge-item {
+            background: #444;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #ffd700;
+        }
+
+        .challenge-item:hover {
+            background: #555;
+        }
+
+        .coords {
+            color: #0ff;
+            font-size: 12px;
+        }
+
+        .info {
+            background: #1a4d7a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .grid-info {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        input[type="color"] {
+            width: 60px;
+            height: 35px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .emoji-picker {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .emoji-btn {
+            padding: 5px 10px;
+            font-size: 20px;
+            background: #555;
+            min-width: 40px;
+        }
+
+        .emoji-btn.selected {
+            background: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Éditeur de Niveaux - Last Dunes</h1>
+
+    <div id="container">
+        <div id="canvas-area">
+            <div class="info">
+                <strong>Instructions:</strong><br>
+                1. Chargez une image PNG pour la carte (ou utilisez la grille)<br>
+                2. Cliquez sur le canvas pour placer un challenge<br>
+                3. Configurez les propriétés dans la barre latérale<br>
+                4. Exportez le fichier JSON quand vous avez terminé
+            </div>
+            <canvas id="gameCanvas" width="800" height="800"></canvas>
+            <div class="grid-info">
+                Grille: <span id="grid-size">40</span>px |
+                Position souris: <span id="mouse-pos">-</span>
+            </div>
+        </div>
+
+        <div id="sidebar">
+            <div class="tool-section">
+                <h3>🖼️ Carte du Niveau</h3>
+                <label>Fichier PNG de la carte:</label>
+                <input type="file" id="map-upload" accept="image/png,image/jpg,image/jpeg">
+                <br>
+                <label>Ou URL de l'image:</label>
+                <input type="text" id="map-url" placeholder="assets/level1.png">
+                <button onclick="loadMapFromURL()">Charger URL</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>⚙️ Configuration</h3>
+                <label>Taille de grille (px):</label>
+                <input type="number" id="grid-size-input" value="40" min="10" max="100" onchange="updateGridSize()">
+
+                <label>Position de départ (X, Y):</label>
+                <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
+                <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
+            </div>
+
+            <div class="tool-section">
+                <h3>➕ Nouveau Challenge</h3>
+
+                <label>Nom:</label>
+                <input type="text" id="new-name" placeholder="Le Gardien">
+
+                <label>Type:</label>
+                <select id="new-type">
+                    <option value="challenge">Challenge</option>
+                    <option value="interaction">Interaction</option>
+                    <option value="boss">Boss</option>
+                </select>
+
+                <label>Icône:</label>
+                <div class="emoji-picker">
+                    <button class="emoji-btn selected" onclick="selectEmoji(this, '⚔️')">⚔️</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '🪣')">🪣</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '💀')">💀</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '🗝️')">🗝️</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '🚪')">🚪</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '📜')">📜</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '💎')">💎</button>
+                    <button class="emoji-btn" onclick="selectEmoji(this, '🔥')">🔥</button>
+                </div>
+                <input type="text" id="new-icon" value="⚔️" maxlength="2">
+
+                <label>Couleur:</label>
+                <input type="color" id="new-color" value="#ff00ff">
+
+                <label>Rayon de déclenchement:</label>
+                <input type="number" id="new-radius" value="1" min="0" max="5">
+
+                <label>Dialogue de prévisualisation:</label>
+                <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
+
+                <button onclick="addChallengeAtMouse()">➕ Placer au prochain clic</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>📋 Challenges Placés (<span id="challenge-count">0</span>)</h3>
+                <div id="challenges-list"></div>
+            </div>
+
+            <div class="tool-section">
+                <h3>💾 Export / Import</h3>
+                <button onclick="exportJSON()">📥 Télécharger JSON</button>
+                <button onclick="copyJSON()">📋 Copier JSON</button>
+                <br>
+                <label>Importer JSON:</label>
+                <input type="file" id="json-upload" accept=".json" onchange="importJSON()">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gridSize = 40;
+        let mapImage = null;
+        let challenges = [];
+        let startPos = {x: 16, y: 25};
+        let selectedIcon = '⚔️';
+        let waitingForClick = false;
+        let mouseGridPos = {x: 0, y: 0};
+
+        // Track mouse position
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / gridSize);
+            const y = Math.floor((e.clientY - rect.top) / gridSize);
+            mouseGridPos = {x, y};
+            document.getElementById('mouse-pos').textContent = `(${x}, ${y})`;
+        });
+
+        // Click to place challenge
+        canvas.addEventListener('click', (e) => {
+            if (!waitingForClick) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / gridSize);
+            const y = Math.floor((e.clientY - rect.top) / gridSize);
+
+            const challenge = {
+                id: `challenge_${Date.now()}`,
+                name: document.getElementById('new-name').value || 'Nouveau Challenge',
+                type: document.getElementById('new-type').value,
+                coordinates: {x, y},
+                triggerRadius: parseInt(document.getElementById('new-radius').value),
+                icon: selectedIcon,
+                color: document.getElementById('new-color').value,
+                description: '',
+                dialogue_preview: document.getElementById('new-dialogue').value || 'Un challenge apparaît...',
+                outcomes: {
+                    success_narrow: 'Vous réussissez de justesse.',
+                    success_triumph: 'Vous triomphez brillamment.',
+                    fail_narrow: 'Vous échouez mais survivez.',
+                    fail_catastrophic: 'Échec catastrophique.'
+                }
+            };
+
+            challenges.push(challenge);
+            waitingForClick = false;
+            canvas.style.cursor = 'crosshair';
+            updateChallengesList();
+            render();
+        });
+
+        function selectEmoji(btn, emoji) {
+            document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedIcon = emoji;
+            document.getElementById('new-icon').value = emoji;
+        }
+
+        function addChallengeAtMouse() {
+            waitingForClick = true;
+            canvas.style.cursor = 'cell';
+            alert('Cliquez sur le canvas pour placer le challenge');
+        }
+
+        function updateGridSize() {
+            gridSize = parseInt(document.getElementById('grid-size-input').value);
+            document.getElementById('grid-size').textContent = gridSize;
+            render();
+        }
+
+        function loadMapFromURL() {
+            const url = document.getElementById('map-url').value;
+            if (!url) return;
+
+            mapImage = new Image();
+            mapImage.onload = () => {
+                console.log('Map loaded');
+                render();
+            };
+            mapImage.onerror = () => {
+                alert('Erreur de chargement de l\'image');
+                mapImage = null;
+                render();
+            };
+            mapImage.src = url;
+        }
+
+        document.getElementById('map-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                mapImage = new Image();
+                mapImage.onload = () => {
+                    render();
+                };
+                mapImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function deleteChallenge(id) {
+            challenges = challenges.filter(ch => ch.id !== id);
+            updateChallengesList();
+            render();
+        }
+
+        function updateChallengesList() {
+            const list = document.getElementById('challenges-list');
+            document.getElementById('challenge-count').textContent = challenges.length;
+
+            if (challenges.length === 0) {
+                list.innerHTML = '<em style="color:#888">Aucun challenge placé</em>';
+                return;
+            }
+
+            list.innerHTML = challenges.map(ch => `
+                <div class="challenge-item">
+                    <strong>${ch.icon} ${ch.name}</strong><br>
+                    <span class="coords">Position: (${ch.coordinates.x}, ${ch.coordinates.y})</span><br>
+                    <small>Type: ${ch.type} | Rayon: ${ch.triggerRadius}</small><br>
+                    <button class="delete" onclick="deleteChallenge('${ch.id}')">🗑️ Supprimer</button>
+                </div>
+            `).join('');
+        }
+
+        function exportJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                challenges: challenges
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'challenges.json';
+            a.click();
+        }
+
+        function copyJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                challenges: challenges
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('JSON copié dans le presse-papier!');
+            });
+        }
+
+        function importJSON() {
+            const file = document.getElementById('json-upload').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.mapFile) {
+                        document.getElementById('map-url').value = data.mapFile;
+                        loadMapFromURL();
+                    }
+
+                    if (data.gridSize) {
+                        gridSize = data.gridSize;
+                        document.getElementById('grid-size-input').value = gridSize;
+                        document.getElementById('grid-size').textContent = gridSize;
+                    }
+
+                    if (data.startPos) {
+                        document.getElementById('start-x').value = data.startPos.x;
+                        document.getElementById('start-y').value = data.startPos.y;
+                        startPos = data.startPos;
+                    }
+
+                    if (data.challenges) {
+                        challenges = data.challenges;
+                        updateChallengesList();
+                    }
+
+                    render();
+                    alert('Configuration importée avec succès!');
+                } catch (error) {
+                    alert('Erreur lors de l\'import: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function render() {
+            // Clear
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw map or grid
+            if (mapImage && mapImage.complete) {
+                ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Draw grid
+                ctx.strokeStyle = '#444';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+            }
+
+            // Draw start position
+            const sx = startPos.x * gridSize;
+            const sy = startPos.y * gridSize;
+            ctx.fillStyle = '#00ff00';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(sx, sy, gridSize, gridSize);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sx, sy, gridSize, gridSize);
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚶', sx + gridSize/2, sy + gridSize/2);
+
+            // Draw challenges
+            for (let ch of challenges) {
+                const cx = ch.coordinates.x * gridSize;
+                const cy = ch.coordinates.y * gridSize;
+
+                ctx.fillStyle = ch.color;
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(cx, cy, gridSize, gridSize);
+                ctx.globalAlpha = 1;
+
+                ctx.strokeStyle = ch.color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(cx, cy, gridSize, gridSize);
+
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(ch.icon, cx + gridSize/2, cy + gridSize/2);
+            }
+
+            // Reset
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        // Initial render
+        render();
+        updateChallengesList();
+    </script>
+</body>
+</html>

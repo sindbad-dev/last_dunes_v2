@@ -70,7 +70,9 @@ class MapEngine {
     placeInteractables(challenges) {
         this.challenges = challenges.map(ch => ({
             ...ch,
-            visited: false
+            visited: false,
+            color: ch.color || '#ff00ff',
+            icon: ch.icon || '?'
         }));
     }
 
@@ -175,17 +177,32 @@ class MapEngine {
             }
         }
 
-        // Draw challenges (for debugging)
-        this.ctx.fillStyle = '#ff00ff';
+        // Draw challenges with icons and colors
         for (let challenge of this.challenges) {
             if (!challenge.visited) {
                 const cx = challenge.coordinates.x * this.gridSize;
                 const cy = challenge.coordinates.y * this.gridSize;
+
+                // Draw background with challenge color
+                this.ctx.fillStyle = challenge.color;
+                this.ctx.globalAlpha = 0.6;
                 this.ctx.fillRect(cx, cy, this.gridSize, this.gridSize);
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.font = '10px Arial';
-                this.ctx.fillText(challenge.id.substring(0, 3), cx + 5, cy + 15);
-                this.ctx.fillStyle = '#ff00ff';
+                this.ctx.globalAlpha = 1.0;
+
+                // Draw border
+                this.ctx.strokeStyle = challenge.color;
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(cx, cy, this.gridSize, this.gridSize);
+
+                // Draw icon (emoji) in center
+                this.ctx.font = '24px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(challenge.icon, cx + this.gridSize / 2, cy + this.gridSize / 2);
+
+                // Reset text alignment
+                this.ctx.textAlign = 'left';
+                this.ctx.textBaseline = 'alphabetic';
             }
         }
 

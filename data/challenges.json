@@ -1,0 +1,58 @@
+{
+  "mapFile": "assets/level1.png",
+  "gridSize": 40,
+  "startPos": {"x": 16, "y": 25},
+  "challenges": [
+    {
+      "id": "gate_guard",
+      "name": "Le Gardien",
+      "type": "challenge",
+      "coordinates": {"x": 16, "y": 20},
+      "triggerRadius": 1,
+      "icon": "⚔️",
+      "color": "#ff00ff",
+      "description": "Un gardien squelette bloque l'entrée de la cour.",
+      "dialogue_preview": "Ses orbites vides vous fixent. Il lève une épée rouillée.",
+      "outcomes": {
+        "success_narrow": "Vous esquivez son coup et le poussez dans le sable. (+1 Catastrophe)",
+        "success_triumph": "Vous pulvérisez son crâne d'un coup magistral. Le bruit résonne. (+2 Catastrophe)",
+        "fail_narrow": "Il vous égratigne le bras. Vous passez en force mais blessé.",
+        "fail_catastrophic": "Vous trébuchez. Il sonne l'alarme avant de vous frapper."
+      }
+    },
+    {
+      "id": "poisoned_well",
+      "name": "Le Puits Empoisonné",
+      "type": "interaction",
+      "coordinates": {"x": 10, "y": 8},
+      "triggerRadius": 1,
+      "icon": "🪣",
+      "color": "#00ffff",
+      "description": "Le vieux puits en pierre au nord.",
+      "dialogue_preview": "Une odeur nauséabonde émane du puits.",
+      "outcomes": {
+        "success_narrow": "Vous purifiez l'eau juste assez pour boire. (+1 Catastrophe)",
+        "success_triumph": "Votre magie purifie tout le puits, mais l'éclair de lumière est visible de loin. (+2 Catastrophe)",
+        "fail_narrow": "Vous ne buvez rien et restez assoiffé.",
+        "fail_catastrophic": "Vous tombez dedans en essayant de puiser l'eau."
+      }
+    },
+    {
+      "id": "necromancer_boss",
+      "name": "Le Nécromancien",
+      "type": "boss",
+      "coordinates": {"x": 11, "y": 23},
+      "triggerRadius": 2,
+      "icon": "💀",
+      "color": "#ff0000",
+      "description": "Le Nécromancien prépare son rituel.",
+      "dialogue_preview": "Il ne vous a pas encore vu...",
+      "outcomes": {
+        "success_narrow": "Vous interrompez le rituel, le nécromancien s'enfuit.",
+        "success_triumph": "Vous tuez le nécromancien et récupérez son grimoire.",
+        "fail_narrow": "Le rituel est complété, mais vous survivez à l'explosion.",
+        "fail_catastrophic": "Le nécromancien vous transforme en l'un de ses sbires. Fin de partie."
+      }
+    }
+  ]
+}
