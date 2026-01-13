@@ -214,21 +214,79 @@ class MapEngine {
             }
         }
 
-        // Draw walls
-        this.ctx.fillStyle = '#4a4a4a';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 1;
+        // Draw walls with stone texture
         for (let wall of this.walls) {
             const wx = wall.x * this.gridSize;
             const wy = wall.y * this.gridSize;
+
+            // Base stone color - dark brown
+            this.ctx.fillStyle = '#3d2f27';
             this.ctx.fillRect(wx, wy, this.gridSize, this.gridSize);
+
+            // Add stone texture with multiple shades
+            const stoneShades = [
+                '#2a1f1a', // Very dark brown
+                '#4a3a30', // Medium brown
+                '#554439', // Light brown
+                '#1f1812', // Almost black
+                '#6b5547'  // Lighter accent
+            ];
+
+            // Random-looking but deterministic stone pattern based on position
+            const seed = wall.x * 13 + wall.y * 17;
+            this.ctx.globalAlpha = 0.6;
+
+            // Draw stone blocks/cracks
+            for (let i = 0; i < 8; i++) {
+                const blockX = wx + ((seed * (i + 1) * 7) % (this.gridSize - 4));
+                const blockY = wy + ((seed * (i + 2) * 11) % (this.gridSize - 4));
+                const blockW = 3 + ((seed * (i + 3)) % 5);
+                const blockH = 3 + ((seed * (i + 4)) % 5);
+
+                this.ctx.fillStyle = stoneShades[i % stoneShades.length];
+                this.ctx.fillRect(blockX, blockY, blockW, blockH);
+            }
+
+            this.ctx.globalAlpha = 1.0;
+
+            // Add mortar lines between stones
+            this.ctx.strokeStyle = '#1a1410';
+            this.ctx.lineWidth = 1;
+
+            // Horizontal mortar lines
+            const numHLines = 2;
+            for (let h = 1; h <= numHLines; h++) {
+                const y = wy + (this.gridSize / (numHLines + 1)) * h;
+                this.ctx.beginPath();
+                this.ctx.moveTo(wx, y);
+                this.ctx.lineTo(wx + this.gridSize, y);
+                this.ctx.stroke();
+            }
+
+            // Vertical mortar lines (staggered)
+            const numVLines = 1;
+            for (let v = 1; v <= numVLines; v++) {
+                const x = wx + (this.gridSize / (numVLines + 1)) * v;
+                const offsetY = (wall.y % 2 === 0) ? 0 : this.gridSize / 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, wy + offsetY);
+                this.ctx.lineTo(x, wy + this.gridSize);
+                this.ctx.stroke();
+            }
+
+            // Dark border for depth
+            this.ctx.strokeStyle = '#0d0a08';
+            this.ctx.lineWidth = 2;
             this.ctx.strokeRect(wx, wy, this.gridSize, this.gridSize);
 
-            // Brick pattern
-            this.ctx.fillStyle = '#3a3a3a';
-            this.ctx.fillRect(wx + 2, wy + 2, this.gridSize - 4, this.gridSize/2 - 2);
-            this.ctx.fillRect(wx + 2, wy + this.gridSize/2 + 2, this.gridSize - 4, this.gridSize/2 - 4);
-            this.ctx.fillStyle = '#4a4a4a';
+            // Light edge highlight for 3D effect
+            this.ctx.strokeStyle = '#5a4a3f';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(wx + 1, wy + this.gridSize - 1);
+            this.ctx.lineTo(wx + 1, wy + 1);
+            this.ctx.lineTo(wx + this.gridSize - 1, wy + 1);
+            this.ctx.stroke();
         }
 
         // Draw water

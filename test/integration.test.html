@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test d'Intégration - Texture des Murs</title>
+    <style>
+        body {
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .test-canvas {
+            border: 2px solid #555;
+            background: #2a2a2a;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+        }
+        h2 {
+            color: #ffd700;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .feature {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            border-left: 3px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test d'Intégration - Améliorations de l'Éditeur</h1>
+
+    <div class="info">
+        <h2>✅ Corrections Effectuées</h2>
+
+        <div class="feature">
+            <strong>1. Problème de Zones Cliquables</strong>
+            <p>✓ Suppression du double listener d'événements (click + mousedown)</p>
+            <p>✓ Un seul gestionnaire mousedown pour éviter les clics multiples</p>
+            <p>✓ Mode pinceau fonctionnel sans doublons</p>
+        </div>
+
+        <div class="feature">
+            <strong>2. Nouvelle Texture de Murs</strong>
+            <p>✓ Couleur de base: marron foncé (#3d2f27)</p>
+            <p>✓ Texture de pierre réaliste avec 5 nuances</p>
+            <p>✓ Lignes de mortier horizontales et verticales</p>
+            <p>✓ Effet 3D avec ombres et highlights</p>
+            <p>✓ Pattern déterministe basé sur la position</p>
+        </div>
+
+        <div class="feature">
+            <strong>3. Tests Créés</strong>
+            <p>✓ Test de détection des clics multiples</p>
+            <p>✓ Test de précision de la grille</p>
+            <p>✓ Test du mode pinceau</p>
+            <p>✓ Test de sélection d'outils</p>
+        </div>
+    </div>
+
+    <h2>Aperçu de la Nouvelle Texture</h2>
+    <div class="container">
+        <canvas id="oldTexture" class="test-canvas" width="200" height="200"></canvas>
+        <canvas id="newTexture" class="test-canvas" width="200" height="200"></canvas>
+    </div>
+    <div style="display: flex; gap: 20px; padding-left: 20px;">
+        <div style="width: 200px; text-align: center;">
+            <strong style="color: #f44336;">Ancienne Texture (gris)</strong>
+        </div>
+        <div style="width: 200px; text-align: center;">
+            <strong style="color: #4CAF50;">Nouvelle Texture (pierre marron)</strong>
+        </div>
+    </div>
+
+    <h2>Test de Grille 5x5</h2>
+    <canvas id="gridTest" class="test-canvas" width="400" height="400"></canvas>
+
+    <script>
+        // Old texture rendering
+        const oldCanvas = document.getElementById('oldTexture');
+        const oldCtx = oldCanvas.getContext('2d');
+        const gridSize = 40;
+
+        function drawOldWall(ctx, x, y, size) {
+            ctx.fillStyle = '#4a4a4a';
+            ctx.fillRect(x, y, size, size);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, size, size);
+
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(x + 2, y + 2, size - 4, size/2 - 2);
+            ctx.fillRect(x + 2, y + size/2 + 2, size - 4, size/2 - 4);
+        }
+
+        // Draw 5x5 grid of old walls
+        for (let y = 0; y < 5; y++) {
+            for (let x = 0; x < 5; x++) {
+                drawOldWall(oldCtx, x * gridSize, y * gridSize, gridSize);
+            }
+        }
+
+        // New texture rendering
+        const newCanvas = document.getElementById('newTexture');
+        const newCtx = newCanvas.getContext('2d');
+
+        function drawNewWall(ctx, wallX, wallY, size) {
+            const wx = wallX * size;
+            const wy = wallY * size;
+
+            // Base stone color - dark brown
+            ctx.fillStyle = '#3d2f27';
+            ctx.fillRect(wx, wy, size, size);
+
+            // Add stone texture with multiple shades
+            const stoneShades = [
+                '#2a1f1a', // Very dark brown
+                '#4a3a30', // Medium brown
+                '#554439', // Light brown
+                '#1f1812', // Almost black
+                '#6b5547'  // Lighter accent
+            ];
+
+            // Random-looking but deterministic stone pattern
+            const seed = wallX * 13 + wallY * 17;
+            ctx.globalAlpha = 0.6;
+
+            // Draw stone blocks/cracks
+            for (let i = 0; i < 8; i++) {
+                const blockX = wx + ((seed * (i + 1) * 7) % (size - 4));
+                const blockY = wy + ((seed * (i + 2) * 11) % (size - 4));
+                const blockW = 3 + ((seed * (i + 3)) % 5);
+                const blockH = 3 + ((seed * (i + 4)) % 5);
+
+                ctx.fillStyle = stoneShades[i % stoneShades.length];
+                ctx.fillRect(blockX, blockY, blockW, blockH);
+            }
+
+            ctx.globalAlpha = 1.0;
+
+            // Add mortar lines between stones
+            ctx.strokeStyle = '#1a1410';
+            ctx.lineWidth = 1;
+
+            // Horizontal mortar lines
+            const numHLines = 2;
+            for (let h = 1; h <= numHLines; h++) {
+                const y = wy + (size / (numHLines + 1)) * h;
+                ctx.beginPath();
+                ctx.moveTo(wx, y);
+                ctx.lineTo(wx + size, y);
+                ctx.stroke();
+            }
+
+            // Vertical mortar lines (staggered)
+            const numVLines = 1;
+            for (let v = 1; v <= numVLines; v++) {
+                const x = wx + (size / (numVLines + 1)) * v;
+                const offsetY = (wallY % 2 === 0) ? 0 : size / 3;
+                ctx.beginPath();
+                ctx.moveTo(x, wy + offsetY);
+                ctx.lineTo(x, wy + size);
+                ctx.stroke();
+            }
+
+            // Dark border for depth
+            ctx.strokeStyle = '#0d0a08';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(wx, wy, size, size);
+
+            // Light edge highlight for 3D effect
+            ctx.strokeStyle = '#5a4a3f';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(wx + 1, wy + size - 1);
+            ctx.lineTo(wx + 1, wy + 1);
+            ctx.lineTo(wx + size - 1, wy + 1);
+            ctx.stroke();
+        }
+
+        // Draw 5x5 grid of new walls
+        for (let y = 0; y < 5; y++) {
+            for (let x = 0; x < 5; x++) {
+                drawNewWall(newCtx, x, y, gridSize);
+            }
+        }
+
+        // Grid test - 10x10 with every cell numbered
+        const gridCanvas = document.getElementById('gridTest');
+        const gridCtx = gridCanvas.getContext('2d');
+        const gridCellSize = 40;
+
+        gridCtx.fillStyle = '#2a2a2a';
+        gridCtx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
+
+        // Draw grid and numbers
+        gridCtx.strokeStyle = '#444';
+        gridCtx.lineWidth = 1;
+        gridCtx.font = '12px Arial';
+        gridCtx.textAlign = 'center';
+        gridCtx.textBaseline = 'middle';
+
+        for (let y = 0; y < 10; y++) {
+            for (let x = 0; x < 10; x++) {
+                const px = x * gridCellSize;
+                const py = y * gridCellSize;
+
+                // Draw cell border
+                gridCtx.strokeRect(px, py, gridCellSize, gridCellSize);
+
+                // Draw cell number
+                gridCtx.fillStyle = '#888';
+                gridCtx.fillText(`${x},${y}`, px + gridCellSize/2, py + gridCellSize/2);
+            }
+        }
+
+        // Test click detection
+        let clickedCells = new Set();
+
+        gridCanvas.addEventListener('mousedown', (e) => {
+            const rect = gridCanvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const gx = Math.floor(mx / gridCellSize);
+            const gy = Math.floor(my / gridCellSize);
+
+            const cellKey = `${gx},${gy}`;
+
+            if (!clickedCells.has(cellKey)) {
+                clickedCells.add(cellKey);
+
+                // Highlight clicked cell
+                gridCtx.fillStyle = '#4CAF50';
+                gridCtx.globalAlpha = 0.5;
+                gridCtx.fillRect(gx * gridCellSize, gy * gridCellSize, gridCellSize, gridCellSize);
+                gridCtx.globalAlpha = 1.0;
+
+                // Redraw border and number
+                gridCtx.strokeStyle = '#4CAF50';
+                gridCtx.lineWidth = 2;
+                gridCtx.strokeRect(gx * gridCellSize, gy * gridCellSize, gridCellSize, gridCellSize);
+                gridCtx.strokeStyle = '#444';
+                gridCtx.lineWidth = 1;
+
+                gridCtx.fillStyle = '#fff';
+                gridCtx.fillText(`${gx},${gy}`, gx * gridCellSize + gridCellSize/2, gy * gridCellSize + gridCellSize/2);
+
+                console.log(`Clicked cell (${gx}, ${gy}) - Total cells clicked: ${clickedCells.size}`);
+            }
+        });
+
+        console.log('Tests d\'intégration chargés. Cliquez sur la grille ci-dessous pour tester la détection des clics.');
+    </script>
+</body>
+</html>
