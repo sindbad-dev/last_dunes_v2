@@ -16,27 +16,34 @@ class GameLogic {
     resolveCard(cardType, challengeData, cardDef) {
         let actualOutcome = cardType;
         let narrativeResult = "";
+        let wasForced = false;
 
         // MÉCANIQUE PRINCIPALE : Vérification Catastrophe
         if (this.catastropheLevel >= this.maxCatastrophe) {
             console.log("!!! CATASTROPHE DECLENCHÉE !!!");
             actualOutcome = "fail_catastrophic";
             narrativeResult = "LA JAUGE EST PLEINE ! Le destin se retourne contre vous. " + challengeData.outcomes["fail_catastrophic"];
+            wasForced = true;
             this.catastropheLevel = 0; // Reset après la punition
         } else {
             // Résolution normale
             narrativeResult = challengeData.outcomes[cardType];
-            
+
             // Mise à jour de la jauge selon le coût de la carte
             this.catastropheLevel += cardDef.catastropheCost;
         }
 
-        // Sauvegarde pour l'arbre
+        // Sauvegarde pour l'arbre avec informations détaillées
         this.history.push({
-            challenge: challengeData.description,
-            choice: cardDef.label,
+            challengeName: challengeData.name || challengeData.description,
+            challengeIcon: challengeData.icon || '❓',
+            challengeType: challengeData.type || 'challenge',
+            cardPlayed: cardDef.label,
+            cardType: actualOutcome,
             result: narrativeResult,
-            outcomeType: actualOutcome
+            outcomeType: actualOutcome,
+            catastropheCost: cardDef.catastropheCost || 0,
+            wasForced: wasForced
         });
 
         // Mise à jour UI

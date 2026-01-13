@@ -2,6 +2,9 @@
   "mapFile": "assets/level1.png",
   "gridSize": 40,
   "startPos": {"x": 16, "y": 25},
+  "walls": [],
+  "water": [],
+  "objects": [],
   "challenges": [
     {
       "id": "gate_guard",

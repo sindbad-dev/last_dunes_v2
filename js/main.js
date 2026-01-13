@@ -23,6 +23,7 @@ Promise.all([
 
         engine.loadMap(levelInfo);
         engine.placeInteractables(challengesData.challenges);
+        engine.loadTerrain(challengesData.walls, challengesData.water, challengesData.objects);
         console.log(`✅ ${challengesData.challenges.length} challenges chargés depuis challenges.json`);
     } else {
         // Fallback sur level1.json

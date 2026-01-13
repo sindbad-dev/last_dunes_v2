@@ -15,6 +15,9 @@ class MapEngine {
         this.gridSize = 40;
         this.mapImage = null;
         this.challenges = [];
+        this.walls = [];
+        this.water = [];
+        this.objects = [];
         this.moveCallback = null;
 
         // Keyboard state
@@ -76,6 +79,25 @@ class MapEngine {
         }));
     }
 
+    loadTerrain(walls, water, objects) {
+        this.walls = walls || [];
+        this.water = water || [];
+        this.objects = objects || [];
+        console.log(`Terrain chargé: ${this.walls.length} murs, ${this.water.length} eau, ${this.objects.length} objets`);
+    }
+
+    isBlocked(gridX, gridY) {
+        // Check walls
+        if (this.walls.some(w => w.x === gridX && w.y === gridY)) {
+            return true;
+        }
+        // Check water
+        if (this.water.some(w => w.x === gridX && w.y === gridY)) {
+            return true;
+        }
+        return false;
+    }
+
     onPlayerMove(callback) {
         this.moveCallback = callback;
     }
@@ -95,37 +117,52 @@ class MapEngine {
         const oldY = this.avatar.y;
 
         const speed = this.gridSize;
+        let newX = this.avatar.x;
+        let newY = this.avatar.y;
 
         // ZQSD or Arrow keys
         if (this.keys['z'] || this.keys['arrowup']) {
-            this.avatar.y -= speed;
+            newY -= speed;
             this.keys['z'] = false;
             this.keys['arrowup'] = false;
         }
         if (this.keys['s'] || this.keys['arrowdown']) {
-            this.avatar.y += speed;
+            newY += speed;
             this.keys['s'] = false;
             this.keys['arrowdown'] = false;
         }
         if (this.keys['q'] || this.keys['arrowleft']) {
-            this.avatar.x -= speed;
+            newX -= speed;
             this.keys['q'] = false;
             this.keys['arrowleft'] = false;
         }
         if (this.keys['d'] || this.keys['arrowright']) {
-            this.avatar.x += speed;
+            newX += speed;
             this.keys['d'] = false;
             this.keys['arrowright'] = false;
         }
 
-        // Boundary collision
+        // Calculate grid position for new position
+        const newGridX = Math.floor(newX / this.gridSize);
+        const newGridY = Math.floor(newY / this.gridSize);
+
+        // Check boundaries
         const maxX = this.canvas.width - this.avatar.size;
         const maxY = this.canvas.height - this.avatar.size;
 
-        if (this.avatar.x < 0) this.avatar.x = 0;
-        if (this.avatar.y < 0) this.avatar.y = 0;
-        if (this.avatar.x > maxX) this.avatar.x = maxX;
-        if (this.avatar.y > maxY) this.avatar.y = maxY;
+        if (newX < 0) newX = 0;
+        if (newY < 0) newY = 0;
+        if (newX > maxX) newX = maxX;
+        if (newY > maxY) newY = maxY;
+
+        // Check collision with walls/water
+        if (!this.isBlocked(newGridX, newGridY)) {
+            this.avatar.x = newX;
+            this.avatar.y = newY;
+        } else {
+            // Collision detected, don't move
+            console.log(`Collision détectée à (${newGridX}, ${newGridY})`);
+        }
 
         // Check if position changed
         if (oldX !== this.avatar.x || oldY !== this.avatar.y) {
@@ -176,6 +213,62 @@ class MapEngine {
                 this.ctx.stroke();
             }
         }
+
+        // Draw walls
+        this.ctx.fillStyle = '#4a4a4a';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 1;
+        for (let wall of this.walls) {
+            const wx = wall.x * this.gridSize;
+            const wy = wall.y * this.gridSize;
+            this.ctx.fillRect(wx, wy, this.gridSize, this.gridSize);
+            this.ctx.strokeRect(wx, wy, this.gridSize, this.gridSize);
+
+            // Brick pattern
+            this.ctx.fillStyle = '#3a3a3a';
+            this.ctx.fillRect(wx + 2, wy + 2, this.gridSize - 4, this.gridSize/2 - 2);
+            this.ctx.fillRect(wx + 2, wy + this.gridSize/2 + 2, this.gridSize - 4, this.gridSize/2 - 4);
+            this.ctx.fillStyle = '#4a4a4a';
+        }
+
+        // Draw water
+        this.ctx.fillStyle = '#1e90ff';
+        this.ctx.globalAlpha = 0.6;
+        for (let w of this.water) {
+            const wx = w.x * this.gridSize;
+            const wy = w.y * this.gridSize;
+            this.ctx.fillRect(wx, wy, this.gridSize, this.gridSize);
+        }
+        this.ctx.globalAlpha = 1.0;
+        this.ctx.strokeStyle = '#0066cc';
+        this.ctx.lineWidth = 1;
+        for (let w of this.water) {
+            const wx = w.x * this.gridSize;
+            const wy = w.y * this.gridSize;
+            this.ctx.strokeRect(wx, wy, this.gridSize, this.gridSize);
+        }
+
+        // Draw objects
+        this.ctx.font = '28px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        for (let obj of this.objects) {
+            const ox = obj.x * this.gridSize + this.gridSize/2;
+            const oy = obj.y * this.gridSize + this.gridSize/2;
+
+            // Shadow
+            this.ctx.fillStyle = '#000';
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.fillText(obj.emoji, ox + 2, oy + 2);
+            this.ctx.globalAlpha = 1.0;
+
+            // Emoji
+            this.ctx.fillText(obj.emoji, ox, oy);
+        }
+
+        // Reset text alignment for challenges
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
 
         // Draw challenges with icons and colors
         for (let challenge of this.challenges) {

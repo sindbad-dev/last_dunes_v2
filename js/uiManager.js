@@ -153,36 +153,96 @@ class UIManager {
     }
 
     showYggdrasil(history) {
-        // Build story tree
+        // Build story tree with enhanced UI
         this.storyTree.innerHTML = '';
 
+        // Add summary header
+        const summary = document.createElement('div');
+        summary.className = 'recap-summary';
+        summary.innerHTML = `
+            <h2>📜 Récapitulatif de votre aventure</h2>
+            <p>${history.length} challenge${history.length > 1 ? 's' : ''} rencontré${history.length > 1 ? 's' : ''}</p>
+        `;
+        this.storyTree.appendChild(summary);
+
+        // Create timeline
         history.forEach((entry, index) => {
             const node = document.createElement('div');
             node.className = 'story-node';
 
-            const title = document.createElement('h3');
-            title.textContent = `${index + 1}. ${entry.challenge}`;
-            title.style.color = '#ffd700';
-            node.appendChild(title);
-
-            const choice = document.createElement('p');
-            choice.textContent = `Choix: ${entry.choice}`;
-            choice.style.fontStyle = 'italic';
-            node.appendChild(choice);
-
-            const result = document.createElement('p');
-            result.textContent = entry.result;
-
-            // Color code based on outcome
-            if (entry.outcomeType.includes('success')) {
-                result.style.color = '#4CAF50';
+            // Add outcome class for styling
+            let outcomeClass = '';
+            if (entry.outcomeType.includes('success_triumph')) {
+                outcomeClass = 'outcome-triumph';
+            } else if (entry.outcomeType.includes('success_narrow')) {
+                outcomeClass = 'outcome-success';
             } else if (entry.outcomeType.includes('fail_catastrophic')) {
-                result.style.color = '#ff0000';
+                outcomeClass = 'outcome-catastrophic';
             } else {
-                result.style.color = '#ff9800';
+                outcomeClass = 'outcome-fail';
+            }
+            node.classList.add(outcomeClass);
+
+            // Challenge header with icon
+            const header = document.createElement('div');
+            header.className = 'challenge-header';
+            header.innerHTML = `
+                <span class="challenge-number">#${index + 1}</span>
+                <span class="challenge-icon">${entry.challengeIcon || '❓'}</span>
+                <h3 class="challenge-title">${entry.challengeName || entry.challenge}</h3>
+            `;
+            node.appendChild(header);
+
+            // Challenge type badge
+            const typeBadge = document.createElement('span');
+            typeBadge.className = 'challenge-type-badge';
+            const typeEmoji = entry.challengeType === 'boss' ? '👑' :
+                            entry.challengeType === 'interaction' ? '💬' : '⚔️';
+            typeBadge.textContent = `${typeEmoji} ${entry.challengeType}`;
+            header.appendChild(typeBadge);
+
+            // Card played section
+            const cardSection = document.createElement('div');
+            cardSection.className = 'card-played-section';
+
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'section-title';
+            cardTitle.textContent = '🎴 Carte jouée';
+            cardSection.appendChild(cardTitle);
+
+            const cardInfo = document.createElement('div');
+            cardInfo.className = 'card-info';
+            cardInfo.innerHTML = `
+                <strong>${entry.cardPlayed}</strong>
+                ${entry.catastropheCost > 0 ? `<span class="catastrophe-cost">+${entry.catastropheCost} ⚠️</span>` : ''}
+                ${entry.wasForced ? '<span class="forced-badge">⚡ FORCÉ PAR LA JAUGE</span>' : ''}
+            `;
+            cardSection.appendChild(cardInfo);
+            node.appendChild(cardSection);
+
+            // Result section
+            const resultSection = document.createElement('div');
+            resultSection.className = 'result-section';
+
+            const resultTitle = document.createElement('div');
+            resultTitle.className = 'section-title';
+            resultTitle.textContent = '📖 Résultat';
+            resultSection.appendChild(resultTitle);
+
+            const resultText = document.createElement('p');
+            resultText.className = 'result-text';
+            resultText.textContent = entry.result;
+            resultSection.appendChild(resultText);
+
+            node.appendChild(resultSection);
+
+            // Add connector line (except for last item)
+            if (index < history.length - 1) {
+                const connector = document.createElement('div');
+                connector.className = 'timeline-connector';
+                node.appendChild(connector);
             }
 
-            node.appendChild(result);
             this.storyTree.appendChild(node);
         });
 

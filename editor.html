@@ -22,7 +22,7 @@
         }
 
         #sidebar {
-            width: 350px;
+            width: 380px;
             background: #2a2a2a;
             padding: 20px;
             border-radius: 10px;
@@ -77,6 +77,12 @@
             background: #45a049;
         }
 
+        button.active {
+            background: #ffd700;
+            color: #000;
+            font-weight: bold;
+        }
+
         button.delete {
             background: #f44336;
         }
@@ -85,7 +91,32 @@
             background: #da190b;
         }
 
-        .challenge-item {
+        .tool-btn {
+            min-width: 80px;
+            padding: 12px;
+            margin: 5px;
+            background: #555;
+            font-size: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .tool-btn.active {
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        .tool-btn:hover {
+            background: #666;
+        }
+
+        .tool-btn.active:hover {
+            background: #ffd700;
+        }
+
+        .challenge-item, .object-item {
             background: #444;
             padding: 10px;
             margin: 5px 0;
@@ -93,7 +124,7 @@
             border-left: 3px solid #ffd700;
         }
 
-        .challenge-item:hover {
+        .challenge-item:hover, .object-item:hover {
             background: #555;
         }
 
@@ -139,6 +170,62 @@
         .emoji-btn.selected {
             background: #4CAF50;
         }
+
+        .object-library {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .object-lib-btn {
+            padding: 10px;
+            font-size: 28px;
+            background: #444;
+            border: 2px solid #666;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .object-lib-btn:hover {
+            background: #555;
+            transform: scale(1.1);
+        }
+
+        .object-lib-btn.selected {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .layer-indicator {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            background: #444;
+            border: none;
+            cursor: pointer;
+            flex: 1;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab.active {
+            background: #333;
+            color: #ffd700;
+        }
     </style>
 </head>
 <body>
@@ -147,90 +234,166 @@
     <div id="container">
         <div id="canvas-area">
             <div class="info">
-                <strong>Instructions:</strong><br>
-                1. Chargez une image PNG pour la carte (ou utilisez la grille)<br>
-                2. Cliquez sur le canvas pour placer un challenge<br>
-                3. Configurez les propriétés dans la barre latérale<br>
-                4. Exportez le fichier JSON quand vous avez terminé
+                <strong>Mode actuel:</strong> <span id="current-mode">Sélection</span><br>
+                <strong>Outil:</strong> <span id="current-tool">Aucun</span><br>
+                <small>Cliquez sur un outil à droite, puis cliquez/glissez sur la carte pour dessiner</small>
             </div>
             <canvas id="gameCanvas" width="800" height="800"></canvas>
             <div class="grid-info">
                 Grille: <span id="grid-size">40</span>px |
-                Position souris: <span id="mouse-pos">-</span>
+                Position souris: <span id="mouse-pos">-</span> |
+                Calque: <span id="current-layer">Terrain</span>
             </div>
         </div>
 
         <div id="sidebar">
-            <div class="tool-section">
-                <h3>🖼️ Carte du Niveau</h3>
-                <label>Fichier PNG de la carte:</label>
-                <input type="file" id="map-upload" accept="image/png,image/jpg,image/jpeg">
-                <br>
-                <label>Ou URL de l'image:</label>
-                <input type="text" id="map-url" placeholder="assets/level1.png">
-                <button onclick="loadMapFromURL()">Charger URL</button>
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('terrain')">Terrain</button>
+                <button class="tab" onclick="switchTab('objects')">Objets</button>
+                <button class="tab" onclick="switchTab('challenges')">Challenges</button>
+                <button class="tab" onclick="switchTab('config')">Config</button>
             </div>
 
-            <div class="tool-section">
-                <h3>⚙️ Configuration</h3>
-                <label>Taille de grille (px):</label>
-                <input type="number" id="grid-size-input" value="40" min="10" max="100" onchange="updateGridSize()">
-
-                <label>Position de départ (X, Y):</label>
-                <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
-                <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
-            </div>
-
-            <div class="tool-section">
-                <h3>➕ Nouveau Challenge</h3>
-
-                <label>Nom:</label>
-                <input type="text" id="new-name" placeholder="Le Gardien">
-
-                <label>Type:</label>
-                <select id="new-type">
-                    <option value="challenge">Challenge</option>
-                    <option value="interaction">Interaction</option>
-                    <option value="boss">Boss</option>
-                </select>
-
-                <label>Icône:</label>
-                <div class="emoji-picker">
-                    <button class="emoji-btn selected" onclick="selectEmoji(this, '⚔️')">⚔️</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '🪣')">🪣</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '💀')">💀</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '🗝️')">🗝️</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '🚪')">🚪</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '📜')">📜</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '💎')">💎</button>
-                    <button class="emoji-btn" onclick="selectEmoji(this, '🔥')">🔥</button>
+            <!-- Terrain Tab -->
+            <div id="tab-terrain" class="tab-content">
+                <div class="tool-section">
+                    <h3>🎨 Outils de Dessin</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        <button class="tool-btn" onclick="selectTool('wall')" title="Mur">
+                            🧱<br><small>Mur</small>
+                        </button>
+                        <button class="tool-btn" onclick="selectTool('water')" title="Eau">
+                            💧<br><small>Eau</small>
+                        </button>
+                        <button class="tool-btn" onclick="selectTool('eraser')" title="Gomme">
+                            🗑️<br><small>Gomme</small>
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label><input type="checkbox" id="brush-mode"> Mode Pinceau (cliquer-glisser)</label>
+                    </div>
                 </div>
-                <input type="text" id="new-icon" value="⚔️" maxlength="2">
 
-                <label>Couleur:</label>
-                <input type="color" id="new-color" value="#ff00ff">
-
-                <label>Rayon de déclenchement:</label>
-                <input type="number" id="new-radius" value="1" min="0" max="5">
-
-                <label>Dialogue de prévisualisation:</label>
-                <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
-
-                <button onclick="addChallengeAtMouse()">➕ Placer au prochain clic</button>
+                <div class="tool-section">
+                    <h3>📊 Statistiques</h3>
+                    <div>Murs: <span id="walls-count">0</span></div>
+                    <div>Eau: <span id="water-count">0</span></div>
+                    <button onclick="clearLayer('walls')" class="delete">Effacer tous les murs</button>
+                    <button onclick="clearLayer('water')" class="delete">Effacer toute l'eau</button>
+                </div>
             </div>
 
-            <div class="tool-section">
-                <h3>📋 Challenges Placés (<span id="challenge-count">0</span>)</h3>
-                <div id="challenges-list"></div>
+            <!-- Objects Tab -->
+            <div id="tab-objects" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>🪑 Bibliothèque d'Objets</h3>
+                    <div class="object-library">
+                        <button class="object-lib-btn" onclick="selectObject('🚪')" title="Porte">🚪</button>
+                        <button class="object-lib-btn" onclick="selectObject('📦')" title="Coffre">📦</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪑')" title="Chaise">🪑</button>
+                        <button class="object-lib-btn" onclick="selectObject('🛏️')" title="Lit">🛏️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🔥')" title="Cheminée">🔥</button>
+                        <button class="object-lib-btn" onclick="selectObject('📜')" title="Parchemin">📜</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪔')" title="Lampe">🪔</button>
+                        <button class="object-lib-btn" onclick="selectObject('🕯️')" title="Bougie">🕯️</button>
+                        <button class="object-lib-btn" onclick="selectObject('⚱️')" title="Urne">⚱️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🏺')" title="Vase">🏺</button>
+                        <button class="object-lib-btn" onclick="selectObject('🗝️')" title="Clé">🗝️</button>
+                        <button class="object-lib-btn" onclick="selectObject('⚔️')" title="Épée">⚔️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🛡️')" title="Bouclier">🛡️</button>
+                        <button class="object-lib-btn" onclick="selectObject('📚')" title="Livres">📚</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪟')" title="Fenêtre">🪟</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪜')" title="Échelle">🪜</button>
+                        <button class="object-lib-btn" onclick="selectObject('⛓️')" title="Chaînes">⛓️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🦴')" title="Os">🦴</button>
+                    </div>
+                    <label>Ou entrez un emoji:</label>
+                    <input type="text" id="custom-object" placeholder="🎯" maxlength="2">
+                    <button onclick="selectObject(document.getElementById('custom-object').value)">Utiliser</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>📋 Objets Placés (<span id="objects-count">0</span>)</h3>
+                    <div id="objects-list"></div>
+                </div>
             </div>
 
-            <div class="tool-section">
-                <h3>💾 Export / Import</h3>
-                <button onclick="exportJSON()">📥 Télécharger JSON</button>
-                <button onclick="copyJSON()">📋 Copier JSON</button>
-                <br>
-                <label>Importer JSON:</label>
-                <input type="file" id="json-upload" accept=".json" onchange="importJSON()">
+            <!-- Challenges Tab -->
+            <div id="tab-challenges" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>➕ Nouveau Challenge</h3>
+                    <label>Nom:</label>
+                    <input type="text" id="new-name" placeholder="Le Gardien">
+
+                    <label>Type:</label>
+                    <select id="new-type">
+                        <option value="challenge">Challenge</option>
+                        <option value="interaction">Interaction</option>
+                        <option value="boss">Boss</option>
+                    </select>
+
+                    <label>Icône:</label>
+                    <div class="emoji-picker">
+                        <button class="emoji-btn selected" onclick="selectChallengeEmoji(this, '⚔️')">⚔️</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '🪣')">🪣</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '💀')">💀</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '🗝️')">🗝️</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '🚪')">🚪</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '📜')">📜</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '💎')">💎</button>
+                        <button class="emoji-btn" onclick="selectChallengeEmoji(this, '🔥')">🔥</button>
+                    </div>
+                    <input type="text" id="new-icon" value="⚔️" maxlength="2">
+
+                    <label>Couleur:</label>
+                    <input type="color" id="new-color" value="#ff00ff">
+
+                    <label>Rayon de déclenchement:</label>
+                    <input type="number" id="new-radius" value="1" min="0" max="5">
+
+                    <label>Dialogue de prévisualisation:</label>
+                    <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
+
+                    <button onclick="addChallengeMode()">➕ Placer au prochain clic</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>📋 Challenges Placés (<span id="challenge-count">0</span>)</h3>
+                    <div id="challenges-list"></div>
+                </div>
+            </div>
+
+            <!-- Config Tab -->
+            <div id="tab-config" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>🖼️ Carte du Niveau</h3>
+                    <label>Fichier PNG de la carte:</label>
+                    <input type="file" id="map-upload" accept="image/png,image/jpg,image/jpeg">
+                    <br>
+                    <label>Ou URL de l'image:</label>
+                    <input type="text" id="map-url" placeholder="assets/level1.png">
+                    <button onclick="loadMapFromURL()">Charger URL</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>⚙️ Configuration</h3>
+                    <label>Taille de grille (px):</label>
+                    <input type="number" id="grid-size-input" value="40" min="10" max="100" onchange="updateGridSize()">
+
+                    <label>Position de départ (X, Y):</label>
+                    <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
+                    <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
+                </div>
+
+                <div class="tool-section">
+                    <h3>💾 Export / Import</h3>
+                    <button onclick="exportJSON()">📥 Télécharger JSON</button>
+                    <button onclick="copyJSON()">📋 Copier JSON</button>
+                    <br>
+                    <label>Importer JSON:</label>
+                    <input type="file" id="json-upload" accept=".json" onchange="importJSON()">
+                </div>
             </div>
         </div>
     </div>
@@ -239,31 +402,133 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // State
         let gridSize = 40;
         let mapImage = null;
-        let challenges = [];
         let startPos = {x: 16, y: 25};
-        let selectedIcon = '⚔️';
-        let waitingForClick = false;
         let mouseGridPos = {x: 0, y: 0};
 
-        // Track mouse position
+        // Data layers
+        let walls = [];
+        let water = [];
+        let objects = [];
+        let challenges = [];
+
+        // Tool state
+        let currentTool = null;
+        let selectedIcon = '⚔️';
+        let selectedObject = null;
+        let waitingForChallenge = false;
+        let isDrawing = false;
+        let brushMode = false;
+
+        // Active tab
+        let activeTab = 'terrain';
+
+        // Initialize
+        render();
+
+        // Mouse events
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = Math.floor((e.clientX - rect.left) / gridSize);
             const y = Math.floor((e.clientY - rect.top) / gridSize);
             mouseGridPos = {x, y};
             document.getElementById('mouse-pos').textContent = `(${x}, ${y})`;
+
+            if (isDrawing && brushMode) {
+                handleCanvasClick(e);
+            }
         });
 
-        // Click to place challenge
-        canvas.addEventListener('click', (e) => {
-            if (!waitingForClick) return;
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            brushMode = document.getElementById('brush-mode').checked;
+            handleCanvasClick(e);
+        });
 
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('click', handleCanvasClick);
+
+        function handleCanvasClick(e) {
             const rect = canvas.getBoundingClientRect();
             const x = Math.floor((e.clientX - rect.left) / gridSize);
             const y = Math.floor((e.clientY - rect.top) / gridSize);
 
+            if (x < 0 || y < 0 || x >= 20 || y >= 20) return;
+
+            // Challenge placement
+            if (waitingForChallenge) {
+                placeChallenge(x, y);
+                waitingForChallenge = false;
+                canvas.style.cursor = 'crosshair';
+                updateCurrentMode();
+                return;
+            }
+
+            // Object placement
+            if (selectedObject) {
+                placeObject(x, y, selectedObject);
+                return;
+            }
+
+            // Terrain tools
+            if (currentTool === 'wall') {
+                toggleTile(walls, x, y);
+                updateStats();
+            } else if (currentTool === 'water') {
+                toggleTile(water, x, y);
+                updateStats();
+            } else if (currentTool === 'eraser') {
+                removeTile(walls, x, y);
+                removeTile(water, x, y);
+                removeObject(x, y);
+                updateStats();
+                updateObjectsList();
+            }
+
+            render();
+        }
+
+        function toggleTile(layer, x, y) {
+            const index = layer.findIndex(t => t.x === x && t.y === y);
+            if (index === -1) {
+                layer.push({x, y});
+            } else {
+                layer.splice(index, 1);
+            }
+        }
+
+        function removeTile(layer, x, y) {
+            const index = layer.findIndex(t => t.x === x && t.y === y);
+            if (index !== -1) {
+                layer.splice(index, 1);
+            }
+        }
+
+        function placeObject(x, y, emoji) {
+            // Remove existing object at same position
+            removeObject(x, y);
+            objects.push({x, y, emoji});
+            updateObjectsList();
+            render();
+        }
+
+        function removeObject(x, y) {
+            const index = objects.findIndex(o => o.x === x && o.y === y);
+            if (index !== -1) {
+                objects.splice(index, 1);
+            }
+        }
+
+        function placeChallenge(x, y) {
             const challenge = {
                 id: `challenge_${Date.now()}`,
                 name: document.getElementById('new-name').value || 'Nouveau Challenge',
@@ -283,23 +548,108 @@
             };
 
             challenges.push(challenge);
-            waitingForClick = false;
-            canvas.style.cursor = 'crosshair';
             updateChallengesList();
             render();
-        });
+        }
 
-        function selectEmoji(btn, emoji) {
+        function selectTool(tool) {
+            currentTool = tool;
+            selectedObject = null;
+            waitingForChallenge = false;
+
+            // Update UI
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            updateCurrentMode();
+        }
+
+        function selectObject(emoji) {
+            if (!emoji) return;
+            selectedObject = emoji;
+            currentTool = null;
+            waitingForChallenge = false;
+
+            document.querySelectorAll('.object-lib-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent.includes(emoji));
+            });
+
+            updateCurrentMode();
+        }
+
+        function selectChallengeEmoji(btn, emoji) {
             document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedIcon = emoji;
             document.getElementById('new-icon').value = emoji;
         }
 
-        function addChallengeAtMouse() {
-            waitingForClick = true;
+        function addChallengeMode() {
+            waitingForChallenge = true;
+            currentTool = null;
+            selectedObject = null;
             canvas.style.cursor = 'cell';
+            updateCurrentMode();
             alert('Cliquez sur le canvas pour placer le challenge');
+        }
+
+        function clearLayer(layerName) {
+            if (!confirm(`Effacer tous les éléments de la couche "${layerName}" ?`)) return;
+
+            if (layerName === 'walls') walls = [];
+            else if (layerName === 'water') water = [];
+
+            updateStats();
+            render();
+        }
+
+        function updateStats() {
+            document.getElementById('walls-count').textContent = walls.length;
+            document.getElementById('water-count').textContent = water.length;
+            document.getElementById('objects-count').textContent = objects.length;
+            document.getElementById('challenge-count').textContent = challenges.length;
+        }
+
+        function updateCurrentMode() {
+            let mode = 'Sélection';
+            let tool = 'Aucun';
+
+            if (waitingForChallenge) {
+                mode = 'Placement Challenge';
+                tool = 'Cliquez pour placer';
+            } else if (selectedObject) {
+                mode = 'Placement Objet';
+                tool = selectedObject;
+            } else if (currentTool === 'wall') {
+                mode = 'Dessin';
+                tool = '🧱 Mur';
+            } else if (currentTool === 'water') {
+                mode = 'Dessin';
+                tool = '💧 Eau';
+            } else if (currentTool === 'eraser') {
+                mode = 'Effacement';
+                tool = '🗑️ Gomme';
+            }
+
+            document.getElementById('current-mode').textContent = mode;
+            document.getElementById('current-tool').textContent = tool;
+        }
+
+        function switchTab(tabName) {
+            activeTab = tabName;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+            document.getElementById('current-layer').textContent =
+                tabName === 'terrain' ? 'Terrain' :
+                tabName === 'objects' ? 'Objets' :
+                tabName === 'challenges' ? 'Challenges' : 'Configuration';
         }
 
         function updateGridSize() {
@@ -313,10 +663,7 @@
             if (!url) return;
 
             mapImage = new Image();
-            mapImage.onload = () => {
-                console.log('Map loaded');
-                render();
-            };
+            mapImage.onload = () => render();
             mapImage.onerror = () => {
                 alert('Erreur de chargement de l\'image');
                 mapImage = null;
@@ -332,9 +679,7 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 mapImage = new Image();
-                mapImage.onload = () => {
-                    render();
-                };
+                mapImage.onload = () => render();
                 mapImage.src = event.target.result;
             };
             reader.readAsDataURL(file);
@@ -343,6 +688,12 @@
         function deleteChallenge(id) {
             challenges = challenges.filter(ch => ch.id !== id);
             updateChallengesList();
+            render();
+        }
+
+        function deleteObject(index) {
+            objects.splice(index, 1);
+            updateObjectsList();
             render();
         }
 
@@ -365,6 +716,24 @@
             `).join('');
         }
 
+        function updateObjectsList() {
+            const list = document.getElementById('objects-list');
+            document.getElementById('objects-count').textContent = objects.length;
+
+            if (objects.length === 0) {
+                list.innerHTML = '<em style="color:#888">Aucun objet placé</em>';
+                return;
+            }
+
+            list.innerHTML = objects.map((obj, i) => `
+                <div class="object-item">
+                    <strong>${obj.emoji}</strong><br>
+                    <span class="coords">Position: (${obj.x}, ${obj.y})</span><br>
+                    <button class="delete" onclick="deleteObject(${i})">🗑️ Supprimer</button>
+                </div>
+            `).join('');
+        }
+
         function exportJSON() {
             const config = {
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
@@ -373,6 +742,9 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
+                walls: walls,
+                water: water,
+                objects: objects,
                 challenges: challenges
             };
 
@@ -393,6 +765,9 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
+                walls: walls,
+                water: water,
+                objects: objects,
                 challenges: challenges
             };
 
@@ -428,11 +803,14 @@
                         startPos = data.startPos;
                     }
 
-                    if (data.challenges) {
-                        challenges = data.challenges;
-                        updateChallengesList();
-                    }
+                    walls = data.walls || [];
+                    water = data.water || [];
+                    objects = data.objects || [];
+                    challenges = data.challenges || [];
 
+                    updateStats();
+                    updateChallengesList();
+                    updateObjectsList();
                     render();
                     alert('Configuration importée avec succès!');
                 } catch (error) {
@@ -449,23 +827,77 @@
 
             // Draw map or grid
             if (mapImage && mapImage.complete) {
+                ctx.globalAlpha = 0.7;
                 ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
-            } else {
-                // Draw grid
-                ctx.strokeStyle = '#444';
-                ctx.lineWidth = 1;
-                for (let x = 0; x < canvas.width; x += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, canvas.height);
-                    ctx.stroke();
-                }
-                for (let y = 0; y < canvas.height; y += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(canvas.width, y);
-                    ctx.stroke();
-                }
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Draw grid
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw walls
+            ctx.fillStyle = '#4a4a4a';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            for (let wall of walls) {
+                const wx = wall.x * gridSize;
+                const wy = wall.y * gridSize;
+                ctx.fillRect(wx, wy, gridSize, gridSize);
+                ctx.strokeRect(wx, wy, gridSize, gridSize);
+
+                // Brick pattern
+                ctx.fillStyle = '#3a3a3a';
+                ctx.fillRect(wx + 2, wy + 2, gridSize - 4, gridSize/2 - 2);
+                ctx.fillRect(wx + 2, wy + gridSize/2 + 2, gridSize - 4, gridSize/2 - 4);
+                ctx.fillStyle = '#4a4a4a';
+            }
+
+            // Draw water
+            ctx.fillStyle = '#1e90ff';
+            ctx.globalAlpha = 0.6;
+            for (let w of water) {
+                const wx = w.x * gridSize;
+                const wy = w.y * gridSize;
+                ctx.fillRect(wx, wy, gridSize, gridSize);
+            }
+            ctx.globalAlpha = 1.0;
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 1;
+            for (let w of water) {
+                const wx = w.x * gridSize;
+                const wy = w.y * gridSize;
+                ctx.strokeRect(wx, wy, gridSize, gridSize);
+            }
+
+            // Draw objects
+            ctx.font = '28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let obj of objects) {
+                const ox = obj.x * gridSize + gridSize/2;
+                const oy = obj.y * gridSize + gridSize/2;
+
+                // Shadow
+                ctx.fillStyle = '#000';
+                ctx.globalAlpha = 0.3;
+                ctx.fillText(obj.emoji, ox + 2, oy + 2);
+                ctx.globalAlpha = 1.0;
+
+                // Emoji
+                ctx.fillText(obj.emoji, ox, oy);
             }
 
             // Draw start position
@@ -479,8 +911,6 @@
             ctx.lineWidth = 2;
             ctx.strokeRect(sx, sy, gridSize, gridSize);
             ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
             ctx.fillText('🚶', sx + gridSize/2, sy + gridSize/2);
 
             // Draw challenges
@@ -498,8 +928,6 @@
                 ctx.strokeRect(cx, cy, gridSize, gridSize);
 
                 ctx.font = '24px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
                 ctx.fillText(ch.icon, cx + gridSize/2, cy + gridSize/2);
             }
 
@@ -508,9 +936,11 @@
             ctx.textBaseline = 'alphabetic';
         }
 
-        // Initial render
-        render();
+        // Initial state
+        updateStats();
         updateChallengesList();
+        updateObjectsList();
+        updateCurrentMode();
     </script>
 </body>
 </html>
