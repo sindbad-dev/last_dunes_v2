@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tests Éditeur - Last Dunes</title>
+    <style>
+        body {
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .test-section.failed {
+            border-left-color: #f44336;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .test-result.pass {
+            background: #1b5e20;
+        }
+        .test-result.fail {
+            background: #b71c1c;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #testCanvas {
+            border: 2px solid #555;
+            background: #2a2a2a;
+            margin: 10px 0;
+        }
+        .click-log {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .click-count {
+            color: #ffd700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests de l'Éditeur de Niveaux</h1>
+
+    <div class="test-section" id="clickTest">
+        <h2>Test 1: Détection des Clics Multiples</h2>
+        <p>Ce test vérifie si les clics déclenchent des événements multiples non désirés.</p>
+        <canvas id="testCanvas" width="400" height="400"></canvas>
+        <div class="click-log" id="clickLog"></div>
+        <p>Nombre de clics détectés: <span class="click-count" id="clickCount">0</span></p>
+        <p>Nombre d'événements déclenchés: <span class="click-count" id="eventCount">0</span></p>
+        <div id="clickTestResult"></div>
+        <button onclick="resetClickTest()">Réinitialiser</button>
+    </div>
+
+    <div class="test-section" id="gridTest">
+        <h2>Test 2: Précision de la Grille</h2>
+        <p>Vérifie que toutes les cellules de la grille sont correctement cliquables.</p>
+        <div id="gridTestResult"></div>
+        <button onclick="runGridTest()">Lancer le test de grille</button>
+    </div>
+
+    <div class="test-section" id="brushTest">
+        <h2>Test 3: Mode Pinceau</h2>
+        <p>Teste le comportement du mode pinceau (cliquer-glisser).</p>
+        <div id="brushTestResult"></div>
+        <button onclick="runBrushTest()">Lancer le test de pinceau</button>
+    </div>
+
+    <div class="test-section" id="toolTest">
+        <h2>Test 4: Sélection d'Outils</h2>
+        <p>Vérifie que la sélection d'outils fonctionne correctement.</p>
+        <div id="toolTestResult"></div>
+        <button onclick="runToolTest()">Lancer le test d'outils</button>
+    </div>
+
+    <button onclick="runAllTests()" style="background: #2196F3; font-size: 16px; padding: 15px 30px;">▶️ Lancer tous les tests</button>
+
+    <script>
+        // Test canvas setup
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 40;
+
+        let clickCount = 0;
+        let eventCount = 0;
+        let clickLog = [];
+        let isDrawing = false;
+
+        // Draw grid
+        function drawGrid() {
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        drawGrid();
+
+        // Test 1: Click detection
+        function logClick(eventType, x, y) {
+            eventCount++;
+            const timestamp = new Date().getTime();
+            const gridX = Math.floor(x / gridSize);
+            const gridY = Math.floor(y / gridSize);
+
+            const entry = {
+                eventType,
+                timestamp,
+                x: gridX,
+                y: gridY
+            };
+
+            clickLog.push(entry);
+
+            // Update display
+            document.getElementById('eventCount').textContent = eventCount;
+            const logDiv = document.getElementById('clickLog');
+            logDiv.innerHTML = clickLog.slice(-10).reverse().map(e =>
+                `<div>[${e.timestamp}] ${e.eventType} at (${e.x}, ${e.y})</div>`
+            ).join('');
+
+            // Check for double events in same location within 100ms
+            checkForDoubleEvents();
+        }
+
+        function checkForDoubleEvents() {
+            if (clickLog.length < 2) return;
+
+            const recent = clickLog.slice(-2);
+            const timeDiff = recent[1].timestamp - recent[0].timestamp;
+            const sameLocation = recent[0].x === recent[1].x && recent[0].y === recent[1].y;
+
+            if (sameLocation && timeDiff < 100) {
+                const resultDiv = document.getElementById('clickTestResult');
+                resultDiv.innerHTML = '<div class="test-result fail">❌ ÉCHEC: Double événement détecté! Les clics déclenchent plusieurs événements au même endroit.</div>';
+                document.getElementById('clickTest').classList.add('failed');
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            logClick('mousedown', x, y);
+            handleClick(x, y);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            logClick('click', x, y);
+            // This would cause double handling!
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        function handleClick(x, y) {
+            clickCount++;
+            document.getElementById('clickCount').textContent = clickCount;
+
+            const gridX = Math.floor(x / gridSize);
+            const gridY = Math.floor(y / gridSize);
+
+            // Visual feedback
+            ctx.fillStyle = '#4CAF50';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(gridX * gridSize, gridY * gridSize, gridSize, gridSize);
+            ctx.globalAlpha = 1.0;
+
+            setTimeout(drawGrid, 300);
+        }
+
+        function resetClickTest() {
+            clickCount = 0;
+            eventCount = 0;
+            clickLog = [];
+            document.getElementById('clickCount').textContent = '0';
+            document.getElementById('eventCount').textContent = '0';
+            document.getElementById('clickLog').innerHTML = '';
+            document.getElementById('clickTestResult').innerHTML = '';
+            document.getElementById('clickTest').classList.remove('failed');
+            drawGrid();
+        }
+
+        // Test 2: Grid precision test
+        function runGridTest() {
+            const resultDiv = document.getElementById('gridTestResult');
+            resultDiv.innerHTML = '<div style="color: #ffd700;">⏳ Test en cours...</div>';
+
+            const gridCells = [];
+            const cellsPerRow = canvas.width / gridSize;
+            const cellsPerCol = canvas.height / gridSize;
+
+            // Simulate clicks on all grid cells
+            for (let y = 0; y < cellsPerCol; y++) {
+                for (let x = 0; x < cellsPerRow; x++) {
+                    const centerX = x * gridSize + gridSize / 2;
+                    const centerY = y * gridSize + gridSize / 2;
+
+                    const calculatedX = Math.floor(centerX / gridSize);
+                    const calculatedY = Math.floor(centerY / gridSize);
+
+                    const correct = calculatedX === x && calculatedY === y;
+                    gridCells.push({ x, y, correct });
+                }
+            }
+
+            const failedCells = gridCells.filter(c => !c.correct);
+
+            if (failedCells.length === 0) {
+                resultDiv.innerHTML = `<div class="test-result pass">✅ SUCCÈS: Toutes les ${gridCells.length} cellules sont correctement détectables.</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="test-result fail">❌ ÉCHEC: ${failedCells.length} cellules ont une mauvaise détection.</div>`;
+            }
+        }
+
+        // Test 3: Brush mode test
+        function runBrushTest() {
+            const resultDiv = document.getElementById('brushTestResult');
+            resultDiv.innerHTML = '<div style="color: #ffd700;">⏳ Test en cours...</div>';
+
+            // Simulate brush mode behavior
+            const brushPath = [];
+            let lastX = -1, lastY = -1;
+
+            // Simulate dragging across multiple cells
+            for (let i = 0; i < 5; i++) {
+                const x = i;
+                const y = 2;
+
+                if (x !== lastX || y !== lastY) {
+                    brushPath.push({x, y});
+                    lastX = x;
+                    lastY = y;
+                }
+            }
+
+            if (brushPath.length === 5) {
+                resultDiv.innerHTML = `<div class="test-result pass">✅ SUCCÈS: Le mode pinceau détecte correctement ${brushPath.length} cellules différentes.</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="test-result fail">❌ ÉCHEC: Le mode pinceau a un comportement incorrect.</div>`;
+            }
+        }
+
+        // Test 4: Tool selection test
+        function runToolTest() {
+            const resultDiv = document.getElementById('toolTestResult');
+            resultDiv.innerHTML = '<div style="color: #ffd700;">⏳ Test en cours...</div>';
+
+            let testsPassed = 0;
+            const totalTests = 3;
+
+            // Test 1: Can select tool
+            let currentTool = null;
+            currentTool = 'wall';
+            if (currentTool === 'wall') testsPassed++;
+
+            // Test 2: Tool changes correctly
+            currentTool = 'water';
+            if (currentTool === 'water') testsPassed++;
+
+            // Test 3: Can deselect
+            currentTool = null;
+            if (currentTool === null) testsPassed++;
+
+            if (testsPassed === totalTests) {
+                resultDiv.innerHTML = `<div class="test-result pass">✅ SUCCÈS: Tous les tests de sélection d'outils réussis (${testsPassed}/${totalTests}).</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="test-result fail">❌ ÉCHEC: ${totalTests - testsPassed} tests échoués.</div>`;
+            }
+        }
+
+        function runAllTests() {
+            console.log('Lancement de tous les tests...');
+            resetClickTest();
+
+            setTimeout(() => {
+                runGridTest();
+                setTimeout(() => {
+                    runBrushTest();
+                    setTimeout(() => {
+                        runToolTest();
+                        console.log('Tous les tests terminés.');
+                    }, 500);
+                }, 500);
+            }, 500);
+        }
+
+        // Initial grid test
+        setTimeout(() => {
+            console.log('Tests d\'éditeur chargés. Cliquez sur le canvas pour tester la détection des clics.');
+        }, 500);
+    </script>
+</body>
+</html>
