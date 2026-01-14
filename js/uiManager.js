@@ -205,65 +205,17 @@ class UIManager {
         resultsPreview.appendChild(resultsList);
         this.cardsArea.appendChild(resultsPreview);
 
-        // Create cards section
-        const cardsSection = document.createElement('div');
-        cardsSection.className = 'cards-section';
-
-        const cardsTitle = document.createElement('h3');
-        cardsTitle.textContent = 'Choisissez votre action :';
-        cardsTitle.className = 'cards-section-title';
-        cardsSection.appendChild(cardsTitle);
-
-        const cardsRow = document.createElement('div');
-        cardsRow.className = 'cards-row';
-
-        for (let cardType of cardTypes) {
-            const cardDef = this.cardDefinitions[cardType];
-            const card = document.createElement('div');
-            card.className = 'card';
-
-            // Check if gauge is full
-            const isCatastropheFull = gameLogic.catastropheLevel >= gameLogic.maxCatastrophe;
-
-            // Disable success/fail cards if catastrophe is full
-            if (isCatastropheFull && (cardType === 'success_narrow' || cardType === 'success_triumph' || cardType === 'fail_narrow')) {
-                card.classList.add('disabled');
-            }
-
-            // Card icon
-            const icon = document.createElement('div');
-            icon.className = 'card-icon';
-            icon.textContent = cardIcons[cardType];
-            card.appendChild(icon);
-
-            // Card title
-            const title = document.createElement('h3');
-            title.textContent = cardDef.label;
-            card.appendChild(title);
-
-            // Card cost
-            const cost = document.createElement('p');
-            if (cardDef.catastropheCost > 0) {
-                cost.textContent = `Catastrophe: +${cardDef.catastropheCost}`;
-                cost.style.color = '#cc0000';
-            } else {
-                cost.textContent = 'Aucun coût';
-                cost.style.color = '#666';
-            }
-            card.appendChild(cost);
-
-            // Click handler
-            card.addEventListener('click', () => {
-                if (!card.classList.contains('disabled')) {
-                    this.onCardSelected(cardType, cardDef);
-                }
-            });
-
-            cardsRow.appendChild(card);
-        }
-
-        cardsSection.appendChild(cardsRow);
-        this.cardsArea.appendChild(cardsSection);
+        // Add instruction for persistent menu
+        const instruction = document.createElement('div');
+        instruction.className = 'menu-instruction';
+        instruction.innerHTML = '<p><strong>👇 Utilisez le menu de cartes en bas de l\'écran pour choisir votre action</strong></p>';
+        instruction.style.textAlign = 'center';
+        instruction.style.marginTop = '20px';
+        instruction.style.padding = '15px';
+        instruction.style.background = 'rgba(255, 255, 255, 0.1)';
+        instruction.style.borderRadius = '5px';
+        instruction.style.color = '#ffeb3b';
+        this.cardsArea.appendChild(instruction);
     }
 
     onCardSelected(cardType, cardDef) {
