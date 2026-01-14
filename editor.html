@@ -893,7 +893,63 @@
             `).join('');
         }
 
+        function validateChallenges() {
+            const errors = [];
+            const warnings = [];
+
+            challenges.forEach((challenge, index) => {
+                const cNum = index + 1;
+
+                // Check required fields
+                if (!challenge.name || challenge.name === 'Nouveau Challenge') {
+                    warnings.push(`Challenge #${cNum}: Nom par défaut utilisé`);
+                }
+                if (!challenge.dialogue_preview) {
+                    warnings.push(`Challenge #${cNum} (${challenge.name}): Dialogue de prévisualisation manquant`);
+                }
+
+                // Check outcomes
+                const outcomes = challenge.outcomes || {};
+                if (!outcomes.success_narrow || !outcomes.success_triumph ||
+                    !outcomes.fail_narrow || !outcomes.fail_catastrophic) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): Tous les résultats (4) doivent être définis`);
+                }
+
+                // Check healthEffects (CRITICAL)
+                if (!challenge.healthEffects) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): healthEffects manquant - REQUIS pour le jeu!`);
+                } else {
+                    const he = challenge.healthEffects;
+                    if (he.success_triumph === undefined || he.success_narrow === undefined ||
+                        he.fail_narrow === undefined || he.fail_catastrophic === undefined) {
+                        errors.push(`Challenge #${cNum} (${challenge.name}): healthEffects incomplet`);
+                    }
+                }
+
+                // Check coordinates
+                if (!challenge.coordinates || challenge.coordinates.x === undefined || challenge.coordinates.y === undefined) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): Coordonnées manquantes`);
+                }
+            });
+
+            return { errors, warnings };
+        }
+
         function exportJSON() {
+            // Validate before export
+            const validation = validateChallenges();
+
+            if (validation.errors.length > 0) {
+                alert('❌ ERREURS CRITIQUES - Export annulé:\n\n' + validation.errors.join('\n') + '\n\nCorrigez ces erreurs avant d\'exporter.');
+                return;
+            }
+
+            if (validation.warnings.length > 0) {
+                if (!confirm('⚠️ AVERTISSEMENTS:\n\n' + validation.warnings.join('\n') + '\n\nContinuer quand même?')) {
+                    return;
+                }
+            }
+
             const config = {
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
@@ -901,7 +957,16 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
-                maxHealth: parseInt(document.getElementById('max-health').value) || 3,
+                mechanics: {
+                    catastropheMax: 3,
+                    healthMax: parseInt(document.getElementById('max-health').value) || 3,
+                    cards: {
+                        success_narrow: {label: "Réussite de justesse", catastropheCost: 1, outcomeType: "success"},
+                        success_triumph: {label: "Réussite triomphale", catastropheCost: 2, outcomeType: "success"},
+                        fail_narrow: {label: "Échec de justesse", catastropheCost: 0, outcomeType: "fail"},
+                        fail_catastrophic: {label: "Échec catastrophique", catastropheCost: 0, outcomeType: "fail_crit"}
+                    }
+                },
                 walls: walls,
                 water: water,
                 objects: objects,
@@ -915,9 +980,19 @@
             a.href = url;
             a.download = 'challenges.json';
             a.click();
+
+            console.log('✅ Export réussi avec validation complète');
         }
 
         function copyJSON() {
+            // Validate before copy
+            const validation = validateChallenges();
+
+            if (validation.errors.length > 0) {
+                alert('❌ ERREURS CRITIQUES - Copie annulée:\n\n' + validation.errors.join('\n') + '\n\nCorrigez ces erreurs avant de copier.');
+                return;
+            }
+
             const config = {
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
@@ -925,7 +1000,16 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
-                maxHealth: parseInt(document.getElementById('max-health').value) || 3,
+                mechanics: {
+                    catastropheMax: 3,
+                    healthMax: parseInt(document.getElementById('max-health').value) || 3,
+                    cards: {
+                        success_narrow: {label: "Réussite de justesse", catastropheCost: 1, outcomeType: "success"},
+                        success_triumph: {label: "Réussite triomphale", catastropheCost: 2, outcomeType: "success"},
+                        fail_narrow: {label: "Échec de justesse", catastropheCost: 0, outcomeType: "fail"},
+                        fail_catastrophic: {label: "Échec catastrophique", catastropheCost: 0, outcomeType: "fail_crit"}
+                    }
+                },
                 walls: walls,
                 water: water,
                 objects: objects,
@@ -934,7 +1018,11 @@
 
             const json = JSON.stringify(config, null, 2);
             navigator.clipboard.writeText(json).then(() => {
-                alert('JSON copié dans le presse-papier!');
+                let message = '✅ JSON copié dans le presse-papier!';
+                if (validation.warnings.length > 0) {
+                    message += '\n\n⚠️ Avertissements:\n' + validation.warnings.join('\n');
+                }
+                alert(message);
             });
         }
 
@@ -964,7 +1052,10 @@
                         startPos = data.startPos;
                     }
 
-                    if (data.maxHealth) {
+                    // Support both old and new formats
+                    if (data.mechanics && data.mechanics.healthMax) {
+                        document.getElementById('max-health').value = data.mechanics.healthMax;
+                    } else if (data.maxHealth) {
                         document.getElementById('max-health').value = data.maxHealth;
                     }
 
@@ -977,7 +1068,20 @@
                     updateChallengesList();
                     updateObjectsList();
                     render();
-                    alert('Configuration importée avec succès!');
+
+                    // Validate imported data
+                    const validation = validateChallenges();
+                    let message = '✅ Configuration importée avec succès!';
+
+                    if (validation.errors.length > 0) {
+                        message += '\n\n❌ ERREURS trouvées:\n' + validation.errors.join('\n');
+                    }
+
+                    if (validation.warnings.length > 0) {
+                        message += '\n\n⚠️ Avertissements:\n' + validation.warnings.join('\n');
+                    }
+
+                    alert(message);
                 } catch (error) {
                     alert('Erreur lors de l\'import: ' + error.message);
                 }
