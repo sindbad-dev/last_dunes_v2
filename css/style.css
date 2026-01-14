@@ -1,5 +1,19 @@
 body { margin: 0; background: #222; font-family: 'Courier New', monospace; color: white; }
-#game-container { position: relative; width: 800px; height: 800px; margin: 20px auto; overflow: hidden; border: 2px solid #555; }
+#game-container {
+    display: flex;
+    flex-direction: column;
+    width: 800px;
+    margin: 20px auto;
+    border: 2px solid #555;
+}
+
+/* Game Canvas Area */
+#game-canvas-area {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    overflow: hidden;
+}
 
 /* Canvas */
 #gameCanvas {
@@ -16,16 +30,12 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 
 /* Persistent Deck */
 #persistent-deck {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 8;
+    width: 100%;
     background: rgba(0, 0, 0, 0.85);
     padding: 15px;
-    border-radius: 10px;
-    max-width: 90%;
+    box-sizing: border-box;
     transition: all 0.3s ease;
+    border-top: 2px solid #555;
 }
 
 #persistent-deck.disabled {
