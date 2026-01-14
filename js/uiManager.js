@@ -18,13 +18,161 @@ class UIManager {
         this.persistentDeck = document.getElementById('persistent-deck');
         this.persistentCardsArea = document.getElementById('persistent-cards-area');
 
+        // History overlay
+        this.historyOverlay = document.getElementById('history-overlay');
+        this.historyContent = document.getElementById('history-content');
+        this.historyButton = document.getElementById('history-button');
+        this.closeHistoryButton = document.getElementById('close-history');
+
         this.cardDefinitions = {};
         this.currentChallenge = null;
         this.gameLogic = null;
+
+        // Setup history button handlers
+        this.setupHistoryHandlers();
     }
 
     init(cardDefs) {
         this.cardDefinitions = cardDefs;
+    }
+
+    setupHistoryHandlers() {
+        // Open history overlay
+        this.historyButton.addEventListener('click', () => {
+            this.showHistory();
+        });
+
+        // Close history overlay
+        this.closeHistoryButton.addEventListener('click', () => {
+            this.closeHistory();
+        });
+
+        // Close on overlay background click
+        this.historyOverlay.addEventListener('click', (e) => {
+            if (e.target === this.historyOverlay) {
+                this.closeHistory();
+            }
+        });
+    }
+
+    showHistory() {
+        if (!this.gameLogic || this.gameLogic.history.length === 0) {
+            this.historyContent.innerHTML = '';
+            this.historyOverlay.classList.remove('hidden');
+            return;
+        }
+
+        // Build history content using same format as Yggdrasil
+        this.historyContent.innerHTML = '';
+
+        const history = this.gameLogic.history;
+
+        // Add summary header
+        const summary = document.createElement('div');
+        summary.className = 'recap-summary';
+        summary.innerHTML = `
+            <p>${history.length} choix effectué${history.length > 1 ? 's' : ''} jusqu'à présent</p>
+        `;
+        this.historyContent.appendChild(summary);
+
+        // Create timeline
+        history.forEach((entry, index) => {
+            const node = document.createElement('div');
+            node.className = 'story-node';
+
+            // Add outcome class for styling
+            let outcomeClass = '';
+            if (entry.outcomeType.includes('success_triumph')) {
+                outcomeClass = 'outcome-triumph';
+            } else if (entry.outcomeType.includes('success_narrow')) {
+                outcomeClass = 'outcome-success';
+            } else if (entry.outcomeType.includes('fail_catastrophic')) {
+                outcomeClass = 'outcome-catastrophic';
+            } else {
+                outcomeClass = 'outcome-fail';
+            }
+            node.classList.add(outcomeClass);
+
+            // Challenge header with icon
+            const header = document.createElement('div');
+            header.className = 'challenge-header';
+            header.innerHTML = `
+                <span class="challenge-number">#${index + 1}</span>
+                <span class="challenge-icon">${entry.challengeIcon || '❓'}</span>
+                <h3 class="challenge-title">${entry.challengeName || entry.challenge}</h3>
+            `;
+            node.appendChild(header);
+
+            // Challenge type badge
+            const typeBadge = document.createElement('span');
+            typeBadge.className = 'challenge-type-badge';
+            const typeEmoji = entry.challengeType === 'boss' ? '👑' :
+                            entry.challengeType === 'interaction' ? '💬' : '⚔️';
+            typeBadge.textContent = `${typeEmoji} ${entry.challengeType}`;
+            header.appendChild(typeBadge);
+
+            // Card played section
+            const cardSection = document.createElement('div');
+            cardSection.className = 'card-played-section';
+
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'section-title';
+            cardTitle.textContent = '🎴 Carte jouée';
+            cardSection.appendChild(cardTitle);
+
+            const cardInfo = document.createElement('div');
+            cardInfo.className = 'card-info';
+
+            let healthBadge = '';
+            if (entry.healthEffect !== undefined && entry.healthEffect !== 0) {
+                if (entry.healthEffect > 0) {
+                    healthBadge = `<span class="health-effect positive">+${entry.healthEffect} ❤️</span>`;
+                } else {
+                    healthBadge = `<span class="health-effect negative">${entry.healthEffect} ❤️</span>`;
+                }
+            }
+
+            cardInfo.innerHTML = `
+                <strong>${entry.cardPlayed}</strong>
+                ${entry.catastropheCost > 0 ? `<span class="catastrophe-cost">+${entry.catastropheCost} ⚠️</span>` : ''}
+                ${healthBadge}
+                ${entry.wasForced ? '<span class="forced-badge">⚡ FORCÉ PAR LA JAUGE</span>' : ''}
+            `;
+            cardSection.appendChild(cardInfo);
+            node.appendChild(cardSection);
+
+            // Result section
+            const resultSection = document.createElement('div');
+            resultSection.className = 'result-section';
+
+            const resultTitle = document.createElement('div');
+            resultTitle.className = 'section-title';
+            resultTitle.textContent = '📖 Résultat';
+            resultSection.appendChild(resultTitle);
+
+            const resultText = document.createElement('p');
+            resultText.className = 'result-text';
+            resultText.textContent = entry.result;
+            resultSection.appendChild(resultText);
+
+            node.appendChild(resultSection);
+
+            // Add connector line (except for last item)
+            if (index < history.length - 1) {
+                const connector = document.createElement('div');
+                connector.className = 'timeline-connector';
+                this.historyContent.appendChild(node);
+                this.historyContent.appendChild(connector);
+            } else {
+                this.historyContent.appendChild(node);
+            }
+        });
+
+        this.historyOverlay.classList.remove('hidden');
+    }
+
+    closeHistory() {
+        this.historyOverlay.classList.add('hidden');
     }
 
     initPersistentDeck(gameLogic) {
