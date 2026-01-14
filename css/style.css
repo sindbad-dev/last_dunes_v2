@@ -38,17 +38,148 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     border-width: 10px; border-style: solid; border-color: #fff transparent transparent transparent;
 }
 
-.cards-container { display: flex; gap: 15px; }
-.card {
-    width: 120px; height: 180px; background: #e0d0b0; color: #333;
-    padding: 10px; border-radius: 8px; cursor: pointer;
-    transition: transform 0.2s; display: flex; flex-direction: column; justify-content: space-between;
-    border: 2px solid #5a4a3a;
+.cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    align-items: center;
+    max-width: 90%;
 }
-.card:hover { transform: translateY(-10px); }
-.card h3 { font-size: 14px; margin: 0; }
-.card p { font-size: 11px; }
-.card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+
+/* Challenge Results Preview Section */
+.challenge-results-preview {
+    background: rgba(255, 255, 255, 0.95);
+    color: #000;
+    padding: 20px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.results-preview-title {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.result-item {
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.result-item.result-success_triumph {
+    border-left-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.result-item.result-success_narrow {
+    border-left-color: #8BC34A;
+    background: rgba(139, 195, 74, 0.1);
+}
+
+.result-item.result-fail_narrow {
+    border-left-color: #ff9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.result-item.result-fail_catastrophic {
+    border-left-color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.result-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #000;
+}
+
+.result-label strong {
+    font-weight: bold;
+}
+
+.result-text-preview {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* Cards Section */
+.cards-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.cards-section-title {
+    margin: 0;
+    font-size: 18px;
+    color: #fff;
+    text-align: center;
+}
+
+.cards-row {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 140px;
+    height: 160px;
+    background: #e0d0b0;
+    color: #333;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid #5a4a3a;
+    text-align: center;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.card-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.card h3 {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.card p {
+    font-size: 11px;
+    margin: 5px 0;
+}
+
+.card.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(1);
+}
 
 /* Arbre Yggdrasil - Récapitulation */
 #yggdrasil-screen {
