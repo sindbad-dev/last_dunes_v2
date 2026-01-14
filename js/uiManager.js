@@ -12,6 +12,8 @@ class UIManager {
             document.getElementById('seg-3')
         ];
 
+        this.healthBar = document.getElementById('health-bar');
+
         this.cardDefinitions = {};
         this.currentChallenge = null;
         this.gameLogic = null;
@@ -19,6 +21,27 @@ class UIManager {
 
     init(cardDefs) {
         this.cardDefinitions = cardDefs;
+    }
+
+    updateHealthBar(currentHealth, maxHealth) {
+        // Clear existing hearts
+        this.healthBar.innerHTML = '';
+
+        // Generate hearts based on max health
+        for (let i = 0; i < maxHealth; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+
+            if (i < currentHealth) {
+                heart.classList.add('filled');
+                heart.textContent = '❤️';
+            } else {
+                heart.classList.add('empty');
+                heart.textContent = '🤍';
+            }
+
+            this.healthBar.appendChild(heart);
+        }
     }
 
     updateGauge(level) {
@@ -265,9 +288,20 @@ class UIManager {
 
             const cardInfo = document.createElement('div');
             cardInfo.className = 'card-info';
+
+            let healthBadge = '';
+            if (entry.healthEffect !== undefined && entry.healthEffect !== 0) {
+                if (entry.healthEffect > 0) {
+                    healthBadge = `<span class="health-effect positive">+${entry.healthEffect} ❤️</span>`;
+                } else {
+                    healthBadge = `<span class="health-effect negative">${entry.healthEffect} ❤️</span>`;
+                }
+            }
+
             cardInfo.innerHTML = `
                 <strong>${entry.cardPlayed}</strong>
                 ${entry.catastropheCost > 0 ? `<span class="catastrophe-cost">+${entry.catastropheCost} ⚠️</span>` : ''}
+                ${healthBadge}
                 ${entry.wasForced ? '<span class="forced-badge">⚡ FORCÉ PAR LA JAUGE</span>' : ''}
             `;
             cardSection.appendChild(cardInfo);

@@ -25,6 +25,11 @@ Promise.all([
         engine.placeInteractables(challengesData.challenges);
         engine.loadTerrain(challengesData.walls, challengesData.water, challengesData.objects);
         console.log(`✅ ${challengesData.challenges.length} challenges chargés depuis challenges.json`);
+
+        // Override healthMax from challenges.json if available
+        if (challengesData.maxHealth) {
+            gameData.mechanics.healthMax = challengesData.maxHealth;
+        }
     } else {
         // Fallback sur level1.json
         engine.loadMap(gameData.levelInfo);
@@ -35,6 +40,10 @@ Promise.all([
     // Utiliser level1.json pour les mécaniques de jeu
     logic.init(gameData);
     ui.init(gameData.mechanics.cards);
+
+    // Initialize health bar with starting values
+    const startingHealth = gameData.mechanics.healthMax || 3;
+    ui.updateHealthBar(startingHealth, startingHealth);
 
     // Boucle de jeu
     engine.onPlayerMove((pos) => {

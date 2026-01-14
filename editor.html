@@ -355,6 +355,25 @@
                     <label>Dialogue de prévisualisation:</label>
                     <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
 
+                    <label>❤️ Effets sur les points de vie:</label>
+                    <div style="background: #444; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <label style="font-size: 12px;">Réussite triomphale (HP):</label>
+                        <input type="number" id="hp-success-triumph" value="0" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Réussite de justesse (HP):</label>
+                        <input type="number" id="hp-success-narrow" value="0" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Échec de justesse (HP):</label>
+                        <input type="number" id="hp-fail-narrow" value="-1" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Échec catastrophique (HP):</label>
+                        <input type="number" id="hp-fail-catastrophic" value="-2" min="-10" max="10" style="width: 80px;">
+
+                        <small style="color: #aaa; display: block; margin-top: 8px;">
+                            Positif = gain de HP, Négatif = perte de HP
+                        </small>
+                    </div>
+
                     <button onclick="addChallengeMode()">➕ Placer au prochain clic</button>
                 </div>
 
@@ -384,6 +403,12 @@
                     <label>Position de départ (X, Y):</label>
                     <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
                     <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
+
+                    <label>❤️ Points de vie maximum:</label>
+                    <input type="number" id="max-health" value="3" min="1" max="10">
+                    <small style="color: #aaa; display: block; margin-top: 5px;">
+                        Nombre initial de points de vie du joueur (défaut: 3)
+                    </small>
                 </div>
 
                 <div class="tool-section">
@@ -544,6 +569,12 @@
                     success_triumph: 'Vous triomphez brillamment.',
                     fail_narrow: 'Vous échouez mais survivez.',
                     fail_catastrophic: 'Échec catastrophique.'
+                },
+                healthEffects: {
+                    success_triumph: parseInt(document.getElementById('hp-success-triumph').value) || 0,
+                    success_narrow: parseInt(document.getElementById('hp-success-narrow').value) || 0,
+                    fail_narrow: parseInt(document.getElementById('hp-fail-narrow').value) || -1,
+                    fail_catastrophic: parseInt(document.getElementById('hp-fail-catastrophic').value) || -2
                 }
             };
 
@@ -742,6 +773,7 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
+                maxHealth: parseInt(document.getElementById('max-health').value) || 3,
                 walls: walls,
                 water: water,
                 objects: objects,
@@ -765,6 +797,7 @@
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
                 },
+                maxHealth: parseInt(document.getElementById('max-health').value) || 3,
                 walls: walls,
                 water: water,
                 objects: objects,
@@ -801,6 +834,10 @@
                         document.getElementById('start-x').value = data.startPos.x;
                         document.getElementById('start-y').value = data.startPos.y;
                         startPos = data.startPos;
+                    }
+
+                    if (data.maxHealth) {
+                        document.getElementById('max-health').value = data.maxHealth;
                     }
 
                     walls = data.walls || [];
