@@ -148,6 +148,19 @@ class UIManager {
         this.currentChallenge = challengeData;
         this.gameLogic = gameLogic;
 
+        // Display challenge title
+        const titleElement = document.getElementById('challenge-title');
+        titleElement.textContent = `${challengeData.icon} ${challengeData.name}`;
+
+        // Display challenge image (if available)
+        const imageContainer = document.getElementById('challenge-image');
+        if (challengeData.image) {
+            imageContainer.innerHTML = `<img src="${challengeData.image}" alt="${challengeData.name}">`;
+        } else {
+            // Show placeholder with challenge icon
+            imageContainer.innerHTML = `<div class="image-placeholder">${challengeData.icon}</div>`;
+        }
+
         // Show dialogue
         this.dialogueText.textContent = challengeData.dialogue_preview;
 
