@@ -14,6 +14,10 @@ class UIManager {
 
         this.healthBar = document.getElementById('health-bar');
 
+        // Persistent deck
+        this.persistentDeck = document.getElementById('persistent-deck');
+        this.persistentCardsArea = document.getElementById('persistent-cards-area');
+
         this.cardDefinitions = {};
         this.currentChallenge = null;
         this.gameLogic = null;
@@ -21,6 +25,84 @@ class UIManager {
 
     init(cardDefs) {
         this.cardDefinitions = cardDefs;
+    }
+
+    initPersistentDeck(gameLogic) {
+        this.gameLogic = gameLogic;
+        this.persistentCardsArea.innerHTML = '';
+
+        const cardTypes = ['success_triumph', 'success_narrow', 'fail_narrow', 'fail_catastrophic'];
+        const cardIcons = {
+            'success_triumph': '✨',
+            'success_narrow': '✓',
+            'fail_narrow': '⚠️',
+            'fail_catastrophic': '💀'
+        };
+
+        for (let cardType of cardTypes) {
+            const cardDef = this.cardDefinitions[cardType];
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.cardType = cardType;
+
+            // Card icon
+            const icon = document.createElement('div');
+            icon.className = 'card-icon';
+            icon.textContent = cardIcons[cardType];
+            card.appendChild(icon);
+
+            // Card title
+            const title = document.createElement('h3');
+            title.textContent = cardDef.label;
+            card.appendChild(title);
+
+            // Card cost
+            const cost = document.createElement('p');
+            if (cardDef.catastropheCost > 0) {
+                cost.textContent = `Catastrophe: +${cardDef.catastropheCost}`;
+                cost.style.color = '#cc0000';
+            } else {
+                cost.textContent = 'Aucun coût';
+                cost.style.color = '#666';
+            }
+            card.appendChild(cost);
+
+            // Click handler
+            card.addEventListener('click', () => {
+                if (!card.classList.contains('disabled') && !this.persistentDeck.classList.contains('disabled')) {
+                    this.onCardSelected(cardType, cardDef);
+                }
+            });
+
+            this.persistentCardsArea.appendChild(card);
+        }
+    }
+
+    enableDeck() {
+        this.persistentDeck.classList.remove('disabled');
+        this.updateDeckState();
+    }
+
+    disableDeck() {
+        this.persistentDeck.classList.add('disabled');
+    }
+
+    updateDeckState() {
+        if (!this.gameLogic) return;
+
+        const cards = this.persistentCardsArea.querySelectorAll('.card');
+        const isCatastropheFull = this.gameLogic.catastropheLevel >= this.gameLogic.maxCatastrophe;
+
+        cards.forEach(card => {
+            const cardType = card.dataset.cardType;
+
+            // Disable success/fail cards if catastrophe is full
+            if (isCatastropheFull && (cardType === 'success_narrow' || cardType === 'success_triumph' || cardType === 'fail_narrow')) {
+                card.classList.add('disabled');
+            } else {
+                card.classList.remove('disabled');
+            }
+        });
     }
 
     updateHealthBar(currentHealth, maxHealth) {
@@ -69,8 +151,11 @@ class UIManager {
         // Show dialogue
         this.dialogueText.textContent = challengeData.dialogue_preview;
 
-        // Generate cards
+        // Generate cards in overlay (for results preview)
         this.renderCards(challengeData, gameLogic);
+
+        // Enable persistent deck
+        this.enableDeck();
 
         // Show overlay
         this.overlay.classList.remove('hidden');
@@ -182,6 +267,9 @@ class UIManager {
     }
 
     onCardSelected(cardType, cardDef) {
+        // Disable deck
+        this.disableDeck();
+
         // Hide overlay
         this.overlay.classList.add('hidden');
 

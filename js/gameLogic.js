@@ -79,6 +79,7 @@ class GameLogic {
         // Mise à jour UI
         this.ui.updateGauge(this.catastropheLevel);
         this.ui.updateHealthBar(this.currentHealth, this.maxHealth);
+        this.ui.updateDeckState();
 
         // Check for game over due to health
         if (this.currentHealth <= 0) {
