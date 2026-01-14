@@ -7,6 +7,23 @@
   "objects": [],
   "challenges": [
     {
+      "id": "goblin_encounter",
+      "name": "Le Gobelin",
+      "type": "challenge",
+      "coordinates": {"x": 14, "y": 18},
+      "triggerRadius": 1,
+      "icon": "👺",
+      "color": "#00ff00",
+      "description": "Un gobelin vicieux bloque votre chemin.",
+      "dialogue_preview": "Un gobelin armé d'une massue rouillée vous aperçoit et grogne.",
+      "outcomes": {
+        "success_narrow": "Vous passez sans dommage en esquivant ses attaques maladroites.",
+        "success_triumph": "Vous terrassez le gobelin et trouvez un indice pour l'énigme du sphinx !",
+        "fail_narrow": "Le gobelin vous frappe. Vous perdez 1 PV de dommage.",
+        "fail_catastrophic": "Le gobelin vous assomme violemment. Vous perdez 2 PV de dommage et attirez l'attention."
+      }
+    },
+    {
       "id": "gate_guard",
       "name": "Le Gardien",
       "type": "challenge",

@@ -56,7 +56,58 @@ class UIManager {
     renderCards(challengeData, gameLogic) {
         this.cardsArea.innerHTML = '';
 
-        const cardTypes = ['success_narrow', 'success_triumph', 'fail_narrow', 'fail_catastrophic'];
+        // Create results preview section
+        const resultsPreview = document.createElement('div');
+        resultsPreview.className = 'challenge-results-preview';
+
+        const previewTitle = document.createElement('h3');
+        previewTitle.textContent = 'Résultats possibles :';
+        previewTitle.className = 'results-preview-title';
+        resultsPreview.appendChild(previewTitle);
+
+        const resultsList = document.createElement('div');
+        resultsList.className = 'results-list';
+
+        const cardTypes = ['success_triumph', 'success_narrow', 'fail_narrow', 'fail_catastrophic'];
+        const cardIcons = {
+            'success_triumph': '✨',
+            'success_narrow': '✓',
+            'fail_narrow': '⚠️',
+            'fail_catastrophic': '💀'
+        };
+
+        for (let cardType of cardTypes) {
+            const cardDef = this.cardDefinitions[cardType];
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item result-${cardType}`;
+
+            const resultLabel = document.createElement('div');
+            resultLabel.className = 'result-label';
+            resultLabel.innerHTML = `${cardIcons[cardType]} <strong>${cardDef.label}</strong>`;
+
+            const resultText = document.createElement('div');
+            resultText.className = 'result-text-preview';
+            resultText.textContent = challengeData.outcomes[cardType];
+
+            resultItem.appendChild(resultLabel);
+            resultItem.appendChild(resultText);
+            resultsList.appendChild(resultItem);
+        }
+
+        resultsPreview.appendChild(resultsList);
+        this.cardsArea.appendChild(resultsPreview);
+
+        // Create cards section
+        const cardsSection = document.createElement('div');
+        cardsSection.className = 'cards-section';
+
+        const cardsTitle = document.createElement('h3');
+        cardsTitle.textContent = 'Choisissez votre action :';
+        cardsTitle.className = 'cards-section-title';
+        cardsSection.appendChild(cardsTitle);
+
+        const cardsRow = document.createElement('div');
+        cardsRow.className = 'cards-row';
 
         for (let cardType of cardTypes) {
             const cardDef = this.cardDefinitions[cardType];
@@ -70,6 +121,12 @@ class UIManager {
             if (isCatastropheFull && (cardType === 'success_narrow' || cardType === 'success_triumph' || cardType === 'fail_narrow')) {
                 card.classList.add('disabled');
             }
+
+            // Card icon
+            const icon = document.createElement('div');
+            icon.className = 'card-icon';
+            icon.textContent = cardIcons[cardType];
+            card.appendChild(icon);
 
             // Card title
             const title = document.createElement('h3');
@@ -87,13 +144,6 @@ class UIManager {
             }
             card.appendChild(cost);
 
-            // Preview text
-            const preview = document.createElement('p');
-            preview.textContent = challengeData.outcomes[cardType].substring(0, 60) + '...';
-            preview.style.fontSize = '10px';
-            preview.style.fontStyle = 'italic';
-            card.appendChild(preview);
-
             // Click handler
             card.addEventListener('click', () => {
                 if (!card.classList.contains('disabled')) {
@@ -101,8 +151,11 @@ class UIManager {
                 }
             });
 
-            this.cardsArea.appendChild(card);
+            cardsRow.appendChild(card);
         }
+
+        cardsSection.appendChild(cardsRow);
+        this.cardsArea.appendChild(cardsSection);
     }
 
     onCardSelected(cardType, cardDef) {
