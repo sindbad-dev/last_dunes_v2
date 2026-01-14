@@ -116,6 +116,48 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 }
 .hidden { display: none !important; }
 
+/* Challenge Header with Title and Image */
+.challenge-header-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.challenge-image-container {
+    width: 250px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid #ffd700;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.challenge-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    font-size: 80px;
+    opacity: 0.8;
+}
+
+.challenge-title-display {
+    color: #ffd700;
+    font-size: 28px;
+    margin: 0;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+}
+
 .dialogue-bubble {
     background: #fff; color: #000; padding: 20px; border-radius: 20px;
     max-width: 60%; text-align: center; margin-bottom: 30px;
