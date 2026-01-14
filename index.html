@@ -8,40 +8,42 @@
 <body>
 
     <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="800"></canvas>
+        <div id="game-canvas-area">
+            <canvas id="gameCanvas" width="800" height="800"></canvas>
 
-        <div id="ui-hud">
-            <div class="gauge-container">
-                <span>❤️ Points de Vie</span>
-                <div class="health-bar" id="health-bar">
-                    <!-- Hearts will be dynamically generated -->
+            <div id="ui-hud">
+                <div class="gauge-container">
+                    <span>❤️ Points de Vie</span>
+                    <div class="health-bar" id="health-bar">
+                        <!-- Hearts will be dynamically generated -->
+                    </div>
+                </div>
+                <div class="gauge-container">
+                    <span>Jauge Catastrophe</span>
+                    <div class="gauge-bar">
+                        <div class="gauge-segment" id="seg-1"></div>
+                        <div class="gauge-segment" id="seg-2"></div>
+                        <div class="gauge-segment" id="seg-3"></div>
+                    </div>
                 </div>
             </div>
-            <div class="gauge-container">
-                <span>Jauge Catastrophe</span>
-                <div class="gauge-bar">
-                    <div class="gauge-segment" id="seg-1"></div>
-                    <div class="gauge-segment" id="seg-2"></div>
-                    <div class="gauge-segment" id="seg-3"></div>
-                </div>
+
+            <div id="challenge-overlay" class="hidden">
+                <div class="dialogue-bubble" id="dialogue-text"></div>
+                <div class="cards-container" id="cards-area">
+                    </div>
+            </div>
+
+            <div id="yggdrasil-screen" class="hidden">
+                <h1>Arbre du Destin</h1>
+                <div id="story-tree"></div>
+                <button onclick="location.reload()">Rejouer</button>
             </div>
         </div>
 
         <!-- Persistent Card Deck -->
         <div id="persistent-deck" class="disabled">
             <div id="persistent-cards-area"></div>
-        </div>
-
-        <div id="challenge-overlay" class="hidden">
-            <div class="dialogue-bubble" id="dialogue-text"></div>
-            <div class="cards-container" id="cards-area">
-                </div>
-        </div>
-
-        <div id="yggdrasil-screen" class="hidden">
-            <h1>Arbre du Destin</h1>
-            <div id="story-tree"></div>
-            <button onclick="location.reload()">Rejouer</button>
         </div>
     </div>
 
