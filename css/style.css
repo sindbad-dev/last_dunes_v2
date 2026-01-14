@@ -13,6 +13,39 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 
 /* HUD & Jauge */
 #ui-hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 5; }
+
+.gauge-container { margin-bottom: 10px; }
+.gauge-container:last-child { margin-bottom: 0; }
+
+/* Health Bar */
+.health-bar {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+    align-items: center;
+}
+
+.heart {
+    font-size: 24px;
+    transition: all 0.3s ease;
+    animation: heartbeat 1s infinite;
+}
+
+.heart.filled {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.8));
+}
+
+.heart.empty {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Catastrophe Gauge */
 .gauge-bar { display: flex; gap: 5px; margin-top: 5px; }
 .gauge-segment { width: 30px; height: 20px; background: #444; border: 1px solid #777; }
 .gauge-segment.active { background: #ff4444; box-shadow: 0 0 10px #ff0000; }
@@ -369,6 +402,25 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     font-size: 12px;
     font-weight: bold;
     border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.health-effect {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.health-effect.positive {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.health-effect.negative {
+    background: rgba(244, 67, 54, 0.2);
+    color: #ff6666;
+    border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .forced-badge {
