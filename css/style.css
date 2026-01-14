@@ -36,6 +36,8 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     box-sizing: border-box;
     transition: all 0.3s ease;
     border-top: 2px solid #555;
+    position: relative;
+    z-index: 20;
 }
 
 #persistent-deck.disabled {
@@ -132,6 +134,32 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     gap: 25px;
     align-items: center;
     max-width: 90%;
+}
+
+.action-instruction {
+    background: rgba(255, 215, 0, 0.2);
+    border: 2px solid #ffd700;
+    border-radius: 12px;
+    padding: 15px 25px;
+    margin-top: 20px;
+}
+
+.action-instruction p {
+    margin: 0;
+    color: #ffd700;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
 }
 
 /* Challenge Results Preview Section */
