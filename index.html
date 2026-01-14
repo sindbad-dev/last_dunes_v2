@@ -26,6 +26,9 @@
                         <div class="gauge-segment" id="seg-3"></div>
                     </div>
                 </div>
+                <button id="history-button" class="history-btn" title="Voir l'historique de vos choix">
+                    📜 Historique
+                </button>
             </div>
 
             <div id="challenge-overlay" class="hidden">
@@ -44,6 +47,16 @@
                 <h1>Arbre du Destin</h1>
                 <div id="story-tree"></div>
                 <button onclick="location.reload()">Rejouer</button>
+            </div>
+
+            <div id="history-overlay" class="hidden">
+                <div class="history-modal">
+                    <div class="history-header">
+                        <h2>📜 Historique de vos choix</h2>
+                        <button id="close-history" class="close-btn">✕</button>
+                    </div>
+                    <div id="history-content"></div>
+                </div>
             </div>
         </div>
 
