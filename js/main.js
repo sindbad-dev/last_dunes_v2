@@ -45,6 +45,9 @@ Promise.all([
     const startingHealth = gameData.mechanics.healthMax || 3;
     ui.updateHealthBar(startingHealth, startingHealth);
 
+    // Initialize persistent deck
+    ui.initPersistentDeck(logic);
+
     // Boucle de jeu
     engine.onPlayerMove((pos) => {
         const challenge = engine.checkCollision(pos);

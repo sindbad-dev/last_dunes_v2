@@ -14,6 +14,51 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 /* HUD & Jauge */
 #ui-hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 5; }
 
+/* Persistent Deck */
+#persistent-deck {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 8;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px;
+    border-radius: 10px;
+    max-width: 90%;
+    transition: all 0.3s ease;
+}
+
+#persistent-deck.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+#persistent-cards-area {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#persistent-deck .card {
+    width: 100px;
+    height: 130px;
+    font-size: 11px;
+}
+
+#persistent-deck .card-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+#persistent-deck .card h3 {
+    font-size: 12px;
+}
+
+#persistent-deck .card p {
+    font-size: 10px;
+}
+
 .gauge-container { margin-bottom: 10px; }
 .gauge-container:last-child { margin-bottom: 0; }
 
