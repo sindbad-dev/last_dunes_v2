@@ -355,6 +355,25 @@
                     <label>Dialogue de prévisualisation:</label>
                     <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
 
+                    <label>📝 Conséquences des choix de cartes:</label>
+                    <div style="background: #444; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <label style="font-size: 12px; color: #4CAF50;">✨ Réussite triomphale:</label>
+                        <textarea id="outcome-success-triumph" rows="2" placeholder="Exemple: Vous pulvérisez le gobelin et trouvez une clé secrète sur son cadavre." style="margin-bottom: 10px;">Vous triomphez brillamment.</textarea>
+
+                        <label style="font-size: 12px; color: #8BC34A;">✓ Réussite de justesse:</label>
+                        <textarea id="outcome-success-narrow" rows="2" placeholder="Exemple: Vous assommez le gobelin après un combat difficile." style="margin-bottom: 10px;">Vous réussissez de justesse.</textarea>
+
+                        <label style="font-size: 12px; color: #FF9800;">⚠️ Échec de justesse:</label>
+                        <textarea id="outcome-fail-narrow" rows="2" placeholder="Exemple: Le gobelin vous blesse, vous perdez 1 point de vie." style="margin-bottom: 10px;">Vous échouez mais survivez.</textarea>
+
+                        <label style="font-size: 12px; color: #F44336;">💀 Échec catastrophique:</label>
+                        <textarea id="outcome-fail-catastrophic" rows="2" placeholder="Exemple: Le gobelin vous frappe violemment, vous perdez 2 points de vie.">Échec catastrophique.</textarea>
+
+                        <small style="color: #aaa; display: block; margin-top: 8px;">
+                            Décrivez ce qui arrive au joueur selon le type de carte choisie.
+                        </small>
+                    </div>
+
                     <label>❤️ Effets sur les points de vie:</label>
                     <div style="background: #444; padding: 10px; border-radius: 5px; margin: 10px 0;">
                         <label style="font-size: 12px;">Réussite triomphale (HP):</label>
@@ -375,6 +394,7 @@
                     </div>
 
                     <button onclick="addChallengeMode()">➕ Placer au prochain clic</button>
+                    <button onclick="saveEditedChallenge()" style="background: #2196F3; display:none;" id="save-edit-btn">💾 Sauvegarder les modifications</button>
                 </div>
 
                 <div class="tool-section">
@@ -446,6 +466,7 @@
         let waitingForChallenge = false;
         let isDrawing = false;
         let brushMode = false;
+        let editingChallengeId = null;
 
         // Active tab
         let activeTab = 'terrain';
@@ -554,8 +575,7 @@
         }
 
         function placeChallenge(x, y) {
-            const challenge = {
-                id: `challenge_${Date.now()}`,
+            const challengeData = {
                 name: document.getElementById('new-name').value || 'Nouveau Challenge',
                 type: document.getElementById('new-type').value,
                 coordinates: {x, y},
@@ -565,10 +585,10 @@
                 description: '',
                 dialogue_preview: document.getElementById('new-dialogue').value || 'Un challenge apparaît...',
                 outcomes: {
-                    success_narrow: 'Vous réussissez de justesse.',
-                    success_triumph: 'Vous triomphez brillamment.',
-                    fail_narrow: 'Vous échouez mais survivez.',
-                    fail_catastrophic: 'Échec catastrophique.'
+                    success_narrow: document.getElementById('outcome-success-narrow').value || 'Vous réussissez de justesse.',
+                    success_triumph: document.getElementById('outcome-success-triumph').value || 'Vous triomphez brillamment.',
+                    fail_narrow: document.getElementById('outcome-fail-narrow').value || 'Vous échouez mais survivez.',
+                    fail_catastrophic: document.getElementById('outcome-fail-catastrophic').value || 'Échec catastrophique.'
                 },
                 healthEffects: {
                     success_triumph: parseInt(document.getElementById('hp-success-triumph').value) || 0,
@@ -578,7 +598,26 @@
                 }
             };
 
-            challenges.push(challenge);
+            if (editingChallengeId) {
+                // Update existing challenge
+                const index = challenges.findIndex(ch => ch.id === editingChallengeId);
+                if (index !== -1) {
+                    challenges[index] = {
+                        ...challenges[index],
+                        ...challengeData
+                    };
+                }
+                editingChallengeId = null;
+                document.getElementById('save-edit-btn').style.display = 'none';
+            } else {
+                // Create new challenge
+                const challenge = {
+                    id: `challenge_${Date.now()}`,
+                    ...challengeData
+                };
+                challenges.push(challenge);
+            }
+
             updateChallengesList();
             render();
         }
@@ -620,6 +659,12 @@
             currentTool = null;
             selectedObject = null;
             canvas.style.cursor = 'cell';
+
+            // If we were editing, this becomes a "place elsewhere" action
+            if (editingChallengeId) {
+                // Keep the editing ID so the challenge will be moved on next click
+            }
+
             updateCurrentMode();
             alert('Cliquez sur le canvas pour placer le challenge');
         }
@@ -716,6 +761,88 @@
             reader.readAsDataURL(file);
         });
 
+        function editChallenge(id) {
+            const challenge = challenges.find(ch => ch.id === id);
+            if (!challenge) return;
+
+            // Load challenge data into form fields
+            document.getElementById('new-name').value = challenge.name;
+            document.getElementById('new-type').value = challenge.type;
+            document.getElementById('new-icon').value = challenge.icon;
+            document.getElementById('new-color').value = challenge.color;
+            document.getElementById('new-radius').value = challenge.triggerRadius;
+            document.getElementById('new-dialogue').value = challenge.dialogue_preview || '';
+
+            // Load outcomes
+            document.getElementById('outcome-success-triumph').value = challenge.outcomes.success_triumph || '';
+            document.getElementById('outcome-success-narrow').value = challenge.outcomes.success_narrow || '';
+            document.getElementById('outcome-fail-narrow').value = challenge.outcomes.fail_narrow || '';
+            document.getElementById('outcome-fail-catastrophic').value = challenge.outcomes.fail_catastrophic || '';
+
+            // Load health effects
+            document.getElementById('hp-success-triumph').value = challenge.healthEffects.success_triumph || 0;
+            document.getElementById('hp-success-narrow').value = challenge.healthEffects.success_narrow || 0;
+            document.getElementById('hp-fail-narrow').value = challenge.healthEffects.fail_narrow || 0;
+            document.getElementById('hp-fail-catastrophic').value = challenge.healthEffects.fail_catastrophic || 0;
+
+            // Update selected icon
+            selectedIcon = challenge.icon;
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent.includes(challenge.icon));
+            });
+
+            // Set editing mode
+            editingChallengeId = id;
+
+            // Show save button
+            document.getElementById('save-edit-btn').style.display = 'inline-block';
+
+            // Scroll to top of the form
+            document.getElementById('tab-challenges').scrollTop = 0;
+
+            alert('Challenge chargé pour édition. Modifiez les champs et cliquez sur "Sauvegarder les modifications".');
+        }
+
+        function saveEditedChallenge() {
+            if (!editingChallengeId) return;
+
+            const challenge = challenges.find(ch => ch.id === editingChallengeId);
+            if (!challenge) return;
+
+            // Update challenge data without moving it
+            challenge.name = document.getElementById('new-name').value || 'Nouveau Challenge';
+            challenge.type = document.getElementById('new-type').value;
+            challenge.icon = selectedIcon;
+            challenge.color = document.getElementById('new-color').value;
+            challenge.triggerRadius = parseInt(document.getElementById('new-radius').value);
+            challenge.dialogue_preview = document.getElementById('new-dialogue').value || 'Un challenge apparaît...';
+
+            // Update outcomes
+            challenge.outcomes = {
+                success_narrow: document.getElementById('outcome-success-narrow').value || 'Vous réussissez de justesse.',
+                success_triumph: document.getElementById('outcome-success-triumph').value || 'Vous triomphez brillamment.',
+                fail_narrow: document.getElementById('outcome-fail-narrow').value || 'Vous échouez mais survivez.',
+                fail_catastrophic: document.getElementById('outcome-fail-catastrophic').value || 'Échec catastrophique.'
+            };
+
+            // Update health effects
+            challenge.healthEffects = {
+                success_triumph: parseInt(document.getElementById('hp-success-triumph').value) || 0,
+                success_narrow: parseInt(document.getElementById('hp-success-narrow').value) || 0,
+                fail_narrow: parseInt(document.getElementById('hp-fail-narrow').value) || -1,
+                fail_catastrophic: parseInt(document.getElementById('hp-fail-catastrophic').value) || -2
+            };
+
+            // Reset editing mode
+            editingChallengeId = null;
+            document.getElementById('save-edit-btn').style.display = 'none';
+
+            updateChallengesList();
+            render();
+
+            alert('Challenge modifié avec succès!');
+        }
+
         function deleteChallenge(id) {
             challenges = challenges.filter(ch => ch.id !== id);
             updateChallengesList();
@@ -742,6 +869,7 @@
                     <strong>${ch.icon} ${ch.name}</strong><br>
                     <span class="coords">Position: (${ch.coordinates.x}, ${ch.coordinates.y})</span><br>
                     <small>Type: ${ch.type} | Rayon: ${ch.triggerRadius}</small><br>
+                    <button onclick="editChallenge('${ch.id}')">✏️ Éditer</button>
                     <button class="delete" onclick="deleteChallenge('${ch.id}')">🗑️ Supprimer</button>
                 </div>
             `).join('');
