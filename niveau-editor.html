@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Éditeur de Niveaux - Last Dunes</title>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+        }
+
+        #canvas-area {
+            flex: 1;
+        }
+
+        #sidebar {
+            width: 380px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #gameCanvas {
+            border: 2px solid #555;
+            background: #2a2a2a;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .tool-section h3 {
+            margin-top: 0;
+            color: #ffd700;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px 5px 5px 0;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button.active {
+            background: #ffd700;
+            color: #000;
+            font-weight: bold;
+        }
+
+        button.delete {
+            background: #f44336;
+        }
+
+        button.delete:hover {
+            background: #da190b;
+        }
+
+        .tool-btn {
+            min-width: 80px;
+            padding: 12px;
+            margin: 5px;
+            background: #555;
+            font-size: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .tool-btn.active {
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        .tool-btn:hover {
+            background: #666;
+        }
+
+        .tool-btn.active:hover {
+            background: #ffd700;
+        }
+
+        .object-item {
+            background: #444;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #ffd700;
+        }
+
+        .object-item:hover {
+            background: #555;
+        }
+
+        .coords {
+            color: #0ff;
+            font-size: 12px;
+        }
+
+        .info {
+            background: #1a4d7a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .grid-info {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .object-library {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .object-lib-btn {
+            padding: 10px;
+            font-size: 28px;
+            background: #444;
+            border: 2px solid #666;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .object-lib-btn:hover {
+            background: #555;
+            transform: scale(1.1);
+        }
+
+        .object-lib-btn.selected {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            background: #444;
+            border: none;
+            cursor: pointer;
+            flex: 1;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab.active {
+            background: #333;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Éditeur de Niveaux - Last Dunes</h1>
+
+    <div id="container">
+        <div id="canvas-area">
+            <div class="info">
+                <strong>Mode actuel:</strong> <span id="current-mode">Sélection</span><br>
+                <strong>Outil:</strong> <span id="current-tool">Aucun</span><br>
+                <small>Cliquez sur un outil à droite, puis cliquez/glissez sur la carte pour dessiner</small>
+            </div>
+            <canvas id="gameCanvas" width="800" height="800"></canvas>
+            <div class="grid-info">
+                Grille: <span id="grid-size">40</span>px |
+                Position souris: <span id="mouse-pos">-</span> |
+                Calque: <span id="current-layer">Terrain</span>
+            </div>
+        </div>
+
+        <div id="sidebar">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('terrain')">Terrain</button>
+                <button class="tab" onclick="switchTab('objects')">Objets</button>
+                <button class="tab" onclick="switchTab('config')">Config</button>
+            </div>
+
+            <!-- Terrain Tab -->
+            <div id="tab-terrain" class="tab-content">
+                <div class="tool-section">
+                    <h3>🎨 Outils de Dessin</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        <button class="tool-btn" onclick="selectTool('wall')" title="Mur">
+                            🧱<br><small>Mur</small>
+                        </button>
+                        <button class="tool-btn" onclick="selectTool('water')" title="Eau">
+                            💧<br><small>Eau</small>
+                        </button>
+                        <button class="tool-btn" onclick="selectTool('eraser')" title="Gomme">
+                            🗑️<br><small>Gomme</small>
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label><input type="checkbox" id="brush-mode"> Mode Pinceau (cliquer-glisser)</label>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>📊 Statistiques</h3>
+                    <div>Murs: <span id="walls-count">0</span></div>
+                    <div>Eau: <span id="water-count">0</span></div>
+                    <button onclick="clearLayer('walls')" class="delete">Effacer tous les murs</button>
+                    <button onclick="clearLayer('water')" class="delete">Effacer toute l'eau</button>
+                </div>
+            </div>
+
+            <!-- Objects Tab -->
+            <div id="tab-objects" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>🪑 Bibliothèque d'Objets</h3>
+                    <div class="object-library">
+                        <button class="object-lib-btn" onclick="selectObject('🚪')" title="Porte">🚪</button>
+                        <button class="object-lib-btn" onclick="selectObject('📦')" title="Coffre">📦</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪑')" title="Chaise">🪑</button>
+                        <button class="object-lib-btn" onclick="selectObject('🛏️')" title="Lit">🛏️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🔥')" title="Cheminée">🔥</button>
+                        <button class="object-lib-btn" onclick="selectObject('📜')" title="Parchemin">📜</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪔')" title="Lampe">🪔</button>
+                        <button class="object-lib-btn" onclick="selectObject('🕯️')" title="Bougie">🕯️</button>
+                        <button class="object-lib-btn" onclick="selectObject('⚱️')" title="Urne">⚱️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🏺')" title="Vase">🏺</button>
+                        <button class="object-lib-btn" onclick="selectObject('🗝️')" title="Clé">🗝️</button>
+                        <button class="object-lib-btn" onclick="selectObject('⚔️')" title="Épée">⚔️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🛡️')" title="Bouclier">🛡️</button>
+                        <button class="object-lib-btn" onclick="selectObject('📚')" title="Livres">📚</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪟')" title="Fenêtre">🪟</button>
+                        <button class="object-lib-btn" onclick="selectObject('🪜')" title="Échelle">🪜</button>
+                        <button class="object-lib-btn" onclick="selectObject('⛓️')" title="Chaînes">⛓️</button>
+                        <button class="object-lib-btn" onclick="selectObject('🦴')" title="Os">🦴</button>
+                    </div>
+                    <label>Ou entrez un emoji:</label>
+                    <input type="text" id="custom-object" placeholder="🎯" maxlength="2">
+                    <button onclick="selectObject(document.getElementById('custom-object').value)">Utiliser</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>📋 Objets Placés (<span id="objects-count">0</span>)</h3>
+                    <div id="objects-list"></div>
+                </div>
+            </div>
+
+            <!-- Config Tab -->
+            <div id="tab-config" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>🖼️ Carte du Niveau</h3>
+                    <label>Fichier PNG de la carte:</label>
+                    <input type="file" id="map-upload" accept="image/png,image/jpg,image/jpeg">
+                    <br>
+                    <label>Ou URL de l'image:</label>
+                    <input type="text" id="map-url" placeholder="assets/level1.png">
+                    <button onclick="loadMapFromURL()">Charger URL</button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>⚙️ Configuration</h3>
+                    <label>Taille de grille (px):</label>
+                    <input type="number" id="grid-size-input" value="40" min="10" max="100" onchange="updateGridSize()">
+
+                    <label>Position de départ (X, Y):</label>
+                    <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
+                    <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
+                </div>
+
+                <div class="tool-section">
+                    <h3>💾 Export / Import</h3>
+                    <button onclick="exportJSON()">📥 Télécharger JSON</button>
+                    <button onclick="copyJSON()">📋 Copier JSON</button>
+                    <br>
+                    <label>Importer JSON:</label>
+                    <input type="file" id="json-upload" accept=".json" onchange="importJSON()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // State
+        let gridSize = 40;
+        let mapImage = null;
+        let startPos = {x: 16, y: 25};
+        let mouseGridPos = {x: 0, y: 0};
+
+        // Data layers
+        let walls = [];
+        let water = [];
+        let objects = [];
+
+        // Tool state
+        let currentTool = null;
+        let selectedObject = null;
+        let isDrawing = false;
+        let brushMode = false;
+
+        // Active tab
+        let activeTab = 'terrain';
+
+        // Initialize
+        render();
+
+        // Mouse events
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / gridSize);
+            const y = Math.floor((e.clientY - rect.top) / gridSize);
+            mouseGridPos = {x, y};
+            document.getElementById('mouse-pos').textContent = `(${x}, ${y})`;
+
+            if (isDrawing && brushMode) {
+                handleCanvasClick(e);
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            brushMode = document.getElementById('brush-mode').checked;
+            handleCanvasClick(e);
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / gridSize);
+            const y = Math.floor((e.clientY - rect.top) / gridSize);
+
+            if (x < 0 || y < 0 || x >= 20 || y >= 20) return;
+
+            // Object placement
+            if (selectedObject) {
+                placeObject(x, y, selectedObject);
+                return;
+            }
+
+            // Terrain tools
+            if (currentTool === 'wall') {
+                toggleTile(walls, x, y);
+                updateStats();
+            } else if (currentTool === 'water') {
+                toggleTile(water, x, y);
+                updateStats();
+            } else if (currentTool === 'eraser') {
+                removeTile(walls, x, y);
+                removeTile(water, x, y);
+                removeObject(x, y);
+                updateStats();
+                updateObjectsList();
+            }
+
+            render();
+        }
+
+        function toggleTile(layer, x, y) {
+            const index = layer.findIndex(t => t.x === x && t.y === y);
+            if (index === -1) {
+                layer.push({x, y});
+            } else {
+                layer.splice(index, 1);
+            }
+        }
+
+        function removeTile(layer, x, y) {
+            const index = layer.findIndex(t => t.x === x && t.y === y);
+            if (index !== -1) {
+                layer.splice(index, 1);
+            }
+        }
+
+        function placeObject(x, y, emoji) {
+            // Remove existing object at same position
+            removeObject(x, y);
+            objects.push({x, y, emoji});
+            updateObjectsList();
+            render();
+        }
+
+        function removeObject(x, y) {
+            const index = objects.findIndex(o => o.x === x && o.y === y);
+            if (index !== -1) {
+                objects.splice(index, 1);
+            }
+        }
+
+        function selectTool(tool) {
+            currentTool = tool;
+            selectedObject = null;
+
+            // Update UI
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            updateCurrentMode();
+        }
+
+        function selectObject(emoji) {
+            if (!emoji) return;
+            selectedObject = emoji;
+            currentTool = null;
+
+            document.querySelectorAll('.object-lib-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent.includes(emoji));
+            });
+
+            updateCurrentMode();
+        }
+
+        function clearLayer(layerName) {
+            if (!confirm(`Effacer tous les éléments de la couche "${layerName}" ?`)) return;
+
+            if (layerName === 'walls') walls = [];
+            else if (layerName === 'water') water = [];
+
+            updateStats();
+            render();
+        }
+
+        function updateStats() {
+            document.getElementById('walls-count').textContent = walls.length;
+            document.getElementById('water-count').textContent = water.length;
+            document.getElementById('objects-count').textContent = objects.length;
+        }
+
+        function updateCurrentMode() {
+            let mode = 'Sélection';
+            let tool = 'Aucun';
+
+            if (selectedObject) {
+                mode = 'Placement Objet';
+                tool = selectedObject;
+            } else if (currentTool === 'wall') {
+                mode = 'Dessin';
+                tool = '🧱 Mur';
+            } else if (currentTool === 'water') {
+                mode = 'Dessin';
+                tool = '💧 Eau';
+            } else if (currentTool === 'eraser') {
+                mode = 'Effacement';
+                tool = '🗑️ Gomme';
+            }
+
+            document.getElementById('current-mode').textContent = mode;
+            document.getElementById('current-tool').textContent = tool;
+        }
+
+        function switchTab(tabName) {
+            activeTab = tabName;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+            document.getElementById('current-layer').textContent =
+                tabName === 'terrain' ? 'Terrain' :
+                tabName === 'objects' ? 'Objets' : 'Configuration';
+        }
+
+        function updateGridSize() {
+            gridSize = parseInt(document.getElementById('grid-size-input').value);
+            document.getElementById('grid-size').textContent = gridSize;
+            render();
+        }
+
+        function loadMapFromURL() {
+            const url = document.getElementById('map-url').value;
+            if (!url) return;
+
+            mapImage = new Image();
+            mapImage.onload = () => render();
+            mapImage.onerror = () => {
+                alert('Erreur de chargement de l\'image');
+                mapImage = null;
+                render();
+            };
+            mapImage.src = url;
+        }
+
+        document.getElementById('map-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                mapImage = new Image();
+                mapImage.onload = () => render();
+                mapImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function deleteObject(index) {
+            objects.splice(index, 1);
+            updateObjectsList();
+            render();
+        }
+
+        function updateObjectsList() {
+            const list = document.getElementById('objects-list');
+            document.getElementById('objects-count').textContent = objects.length;
+
+            if (objects.length === 0) {
+                list.innerHTML = '<em style="color:#888">Aucun objet placé</em>';
+                return;
+            }
+
+            list.innerHTML = objects.map((obj, i) => `
+                <div class="object-item">
+                    <strong>${obj.emoji}</strong><br>
+                    <span class="coords">Position: (${obj.x}, ${obj.y})</span><br>
+                    <button class="delete" onclick="deleteObject(${i})">🗑️ Supprimer</button>
+                </div>
+            `).join('');
+        }
+
+        function exportJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                walls: walls,
+                water: water,
+                objects: objects
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'niveau.json';
+            a.click();
+        }
+
+        function copyJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                walls: walls,
+                water: water,
+                objects: objects
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('JSON copié dans le presse-papier!');
+            });
+        }
+
+        function importJSON() {
+            const file = document.getElementById('json-upload').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.mapFile) {
+                        document.getElementById('map-url').value = data.mapFile;
+                        loadMapFromURL();
+                    }
+
+                    if (data.gridSize) {
+                        gridSize = data.gridSize;
+                        document.getElementById('grid-size-input').value = gridSize;
+                        document.getElementById('grid-size').textContent = gridSize;
+                    }
+
+                    if (data.startPos) {
+                        document.getElementById('start-x').value = data.startPos.x;
+                        document.getElementById('start-y').value = data.startPos.y;
+                        startPos = data.startPos;
+                    }
+
+                    walls = data.walls || [];
+                    water = data.water || [];
+                    objects = data.objects || [];
+
+                    updateStats();
+                    updateObjectsList();
+                    render();
+                    alert('Configuration importée avec succès!');
+                } catch (error) {
+                    alert('Erreur lors de l\'import: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function render() {
+            // Clear
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw map or grid
+            if (mapImage && mapImage.complete) {
+                ctx.globalAlpha = 0.7;
+                ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Draw grid
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw walls with stone texture
+            for (let wall of walls) {
+                const wx = wall.x * gridSize;
+                const wy = wall.y * gridSize;
+
+                ctx.fillStyle = '#3d2f27';
+                ctx.fillRect(wx, wy, gridSize, gridSize);
+
+                const stoneShades = ['#2a1f1a', '#4a3a30', '#554439', '#1f1812', '#6b5547'];
+                const seed = wall.x * 13 + wall.y * 17;
+                ctx.globalAlpha = 0.6;
+
+                for (let i = 0; i < 8; i++) {
+                    const blockX = wx + ((seed * (i + 1) * 7) % (gridSize - 4));
+                    const blockY = wy + ((seed * (i + 2) * 11) % (gridSize - 4));
+                    const blockW = 3 + ((seed * (i + 3)) % 5);
+                    const blockH = 3 + ((seed * (i + 4)) % 5);
+
+                    ctx.fillStyle = stoneShades[i % stoneShades.length];
+                    ctx.fillRect(blockX, blockY, blockW, blockH);
+                }
+
+                ctx.globalAlpha = 1.0;
+
+                ctx.strokeStyle = '#1a1410';
+                ctx.lineWidth = 1;
+
+                const numHLines = 2;
+                for (let h = 1; h <= numHLines; h++) {
+                    const y = wy + (gridSize / (numHLines + 1)) * h;
+                    ctx.beginPath();
+                    ctx.moveTo(wx, y);
+                    ctx.lineTo(wx + gridSize, y);
+                    ctx.stroke();
+                }
+
+                const numVLines = 1;
+                for (let v = 1; v <= numVLines; v++) {
+                    const x = wx + (gridSize / (numVLines + 1)) * v;
+                    const offsetY = (wall.y % 2 === 0) ? 0 : gridSize / 3;
+                    ctx.beginPath();
+                    ctx.moveTo(x, wy + offsetY);
+                    ctx.lineTo(x, wy + gridSize);
+                    ctx.stroke();
+                }
+
+                ctx.strokeStyle = '#0d0a08';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(wx, wy, gridSize, gridSize);
+
+                ctx.strokeStyle = '#5a4a3f';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(wx + 1, wy + gridSize - 1);
+                ctx.lineTo(wx + 1, wy + 1);
+                ctx.lineTo(wx + gridSize - 1, wy + 1);
+                ctx.stroke();
+            }
+
+            // Draw water
+            ctx.fillStyle = '#1e90ff';
+            ctx.globalAlpha = 0.6;
+            for (let w of water) {
+                const wx = w.x * gridSize;
+                const wy = w.y * gridSize;
+                ctx.fillRect(wx, wy, gridSize, gridSize);
+            }
+            ctx.globalAlpha = 1.0;
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 1;
+            for (let w of water) {
+                const wx = w.x * gridSize;
+                const wy = w.y * gridSize;
+                ctx.strokeRect(wx, wy, gridSize, gridSize);
+            }
+
+            // Draw objects
+            ctx.font = '28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let obj of objects) {
+                const ox = obj.x * gridSize + gridSize/2;
+                const oy = obj.y * gridSize + gridSize/2;
+
+                ctx.fillStyle = '#000';
+                ctx.globalAlpha = 0.3;
+                ctx.fillText(obj.emoji, ox + 2, oy + 2);
+                ctx.globalAlpha = 1.0;
+
+                ctx.fillText(obj.emoji, ox, oy);
+            }
+
+            // Draw start position
+            const sx = startPos.x * gridSize;
+            const sy = startPos.y * gridSize;
+            ctx.fillStyle = '#00ff00';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(sx, sy, gridSize, gridSize);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sx, sy, gridSize, gridSize);
+            ctx.font = '20px Arial';
+            ctx.fillText('🚶', sx + gridSize/2, sy + gridSize/2);
+
+            // Reset
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        // Initial state
+        updateStats();
+        updateObjectsList();
+        updateCurrentMode();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Éditeur d'Arbre Narratif - Last Dunes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #toolbar {
+            background: #2a2a2a;
+            padding: 10px 20px;
+            border-bottom: 2px solid #444;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #toolbar h1 {
+            font-size: 18px;
+            margin-right: 20px;
+            color: #ffd700;
+        }
+
+        #toolbar button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        #toolbar button:hover {
+            background: #45a049;
+        }
+
+        #toolbar button.danger {
+            background: #f44336;
+        }
+
+        #toolbar button.danger:hover {
+            background: #da190b;
+        }
+
+        #main-container {
+            display: flex;
+            height: calc(100vh - 52px);
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+        }
+
+        #canvas.dragging {
+            cursor: grabbing;
+        }
+
+        #sidebar {
+            width: 350px;
+            background: #2a2a2a;
+            border-left: 2px solid #444;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .section {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .section h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        input[type="color"] {
+            height: 35px;
+            cursor: pointer;
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        /* Node styles */
+        .node {
+            position: absolute;
+            background: #2a2a2a;
+            border: 3px solid #666;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 180px;
+            cursor: move;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: box-shadow 0.2s;
+        }
+
+        .node:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+        }
+
+        .node.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .node.start {
+            border-color: #00ff00;
+        }
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .node-icon {
+            font-size: 24px;
+        }
+
+        .node-title {
+            flex: 1;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .node-type {
+            font-size: 9px;
+            background: #444;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .node-body {
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .node-outcomes {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .outcome {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            padding: 4px;
+            background: #333;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .outcome:hover {
+            background: #444;
+        }
+
+        .outcome-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .outcome.success .outcome-icon {
+            background: #4CAF50;
+        }
+
+        .outcome.fail .outcome-icon {
+            background: #f44336;
+        }
+
+        .outcome-label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .outcome-cost {
+            background: #ff6600;
+            color: #fff;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .connection-dot {
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: #ffd700;
+            border: 2px solid #1a1a1a;
+            border-radius: 50%;
+            cursor: crosshair;
+            z-index: 10;
+        }
+
+        .connection-dot:hover {
+            background: #fff;
+            transform: translateY(-50%) scale(1.3);
+        }
+
+        /* Mini map */
+        #minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: rgba(42, 42, 42, 0.9);
+            border: 2px solid #666;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .info-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(42, 42, 42, 0.9);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            border: 1px solid #666;
+        }
+
+        .card-editor {
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            background: #3a3a3a;
+        }
+
+        .card-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .card-editor-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .outcome-preview {
+            font-size: 10px;
+            color: #aaa;
+            padding: 5px;
+            background: #444;
+            border-radius: 3px;
+            margin-top: 5px;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .emoji-picker-inline {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .emoji-btn {
+            padding: 5px;
+            background: #555;
+            border: 2px solid #666;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .emoji-btn:hover {
+            background: #666;
+        }
+
+        .emoji-btn.selected {
+            border-color: #4CAF50;
+            background: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <h1>🌳 Éditeur d'Arbre Narratif</h1>
+        <button onclick="addNode()">➕ Nouveau Challenge</button>
+        <button onclick="deleteSelected()" class="danger">🗑️ Supprimer Sélection</button>
+        <button onclick="exportJSON()">💾 Exporter JSON</button>
+        <button onclick="importJSON()">📥 Importer JSON</button>
+        <button onclick="clearAll()" class="danger">🔥 Tout Effacer</button>
+    </div>
+
+    <div id="main-container">
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+            <div class="info-badge">
+                Nœuds: <span id="node-count">0</span> |
+                Connexions: <span id="connection-count">0</span>
+            </div>
+            <div id="minimap"></div>
+        </div>
+
+        <div id="sidebar">
+            <div id="no-selection" class="section">
+                <h3>📝 Aucune sélection</h3>
+                <p style="font-size: 11px; color: #888;">Cliquez sur un nœud pour l'éditer, ou créez-en un nouveau.</p>
+                <p style="font-size: 11px; color: #888; margin-top: 10px;">💡 Cliquez sur les points de connexion pour relier les challenges.</p>
+            </div>
+
+            <div id="node-editor" style="display: none;">
+                <div class="section">
+                    <h3>⚙️ Propriétés du Challenge</h3>
+
+                    <div class="form-group">
+                        <label>Nom du challenge</label>
+                        <input type="text" id="edit-name" placeholder="Le Gobelin">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="edit-type">
+                            <option value="challenge">Challenge</option>
+                            <option value="interaction">Interaction</option>
+                            <option value="boss">Boss</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Icône</label>
+                        <input type="text" id="edit-icon" value="⚔️" maxlength="2">
+                        <div class="emoji-picker-inline">
+                            <button class="emoji-btn" onclick="selectEmoji('⚔️')">⚔️</button>
+                            <button class="emoji-btn" onclick="selectEmoji('👺')">👺</button>
+                            <button class="emoji-btn" onclick="selectEmoji('💀')">💀</button>
+                            <button class="emoji-btn" onclick="selectEmoji('🗝️')">🗝️</button>
+                            <button class="emoji-btn" onclick="selectEmoji('🚪')">🚪</button>
+                            <button class="emoji-btn" onclick="selectEmoji('📜')">📜</button>
+                            <button class="emoji-btn" onclick="selectEmoji('💎')">💎</button>
+                            <button class="emoji-btn" onclick="selectEmoji('🔥')">🔥</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Couleur</label>
+                        <input type="color" id="edit-color" value="#ff00ff">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dialogue de prévisualisation</label>
+                        <textarea id="edit-dialogue" placeholder="Un gobelin vicieux bloque votre chemin..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label><input type="checkbox" id="edit-is-start"> Nœud de départ</label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎴 Cartes et Conséquences</h3>
+
+                    <div class="card-editor">
+                        <div class="card-editor-header">
+                            <span class="card-editor-title" style="color: #4CAF50;">✓ Réussite Triomphale</span>
+                            <span style="font-size: 10px;">Coût: <input type="number" id="cost-success-triumph" value="2" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                        </div>
+                        <textarea id="outcome-success-triumph" placeholder="Vous triomphez brillamment..."></textarea>
+                        <div class="outcome-preview" id="preview-success-triumph"></div>
+                    </div>
+
+                    <div class="card-editor">
+                        <div class="card-editor-header">
+                            <span class="card-editor-title" style="color: #8BC34A;">✓ Réussite de Justesse</span>
+                            <span style="font-size: 10px;">Coût: <input type="number" id="cost-success-narrow" value="1" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                        </div>
+                        <textarea id="outcome-success-narrow" placeholder="Vous réussissez de justesse..."></textarea>
+                        <div class="outcome-preview" id="preview-success-narrow"></div>
+                    </div>
+
+                    <div class="card-editor">
+                        <div class="card-editor-header">
+                            <span class="card-editor-title" style="color: #FF9800;">✗ Échec de Justesse</span>
+                            <span style="font-size: 10px;">Coût: <input type="number" id="cost-fail-narrow" value="0" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                        </div>
+                        <textarea id="outcome-fail-narrow" placeholder="Vous échouez mais survivez..."></textarea>
+                        <div class="outcome-preview" id="preview-fail-narrow"></div>
+                    </div>
+
+                    <div class="card-editor">
+                        <div class="card-editor-header">
+                            <span class="card-editor-title" style="color: #f44336;">✗ Échec Catastrophique</span>
+                            <span style="font-size: 10px;">Coût: <input type="number" id="cost-fail-catastrophic" value="0" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                        </div>
+                        <textarea id="outcome-fail-catastrophic" placeholder="Échec catastrophique..."></textarea>
+                        <div class="outcome-preview" id="preview-fail-catastrophic"></div>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="saveNodeChanges()">💾 Sauvegarder les modifications</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ Supprimer ce nœud</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth - 350;
+        canvas.height = window.innerHeight - 52;
+
+        // State
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let draggingNode = null;
+        let isDraggingCanvas = false;
+        let connectingFrom = null;
+        let offset = { x: 0, y: 0 };
+        let canvasOffset = { x: 0, y: 0 };
+        let mousePos = { x: 0, y: 0 };
+        let dragStart = { x: 0, y: 0 };
+        let nodeIdCounter = 1;
+
+        // Initialize
+        render();
+
+        // Event listeners
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mousemove', onMouseMove);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('wheel', onWheel);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth - 350;
+            canvas.height = window.innerHeight - 52;
+            render();
+        });
+
+        function onMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - canvasOffset.x;
+            const y = e.clientY - rect.top - canvasOffset.y;
+            mousePos = { x, y };
+
+            // Check if clicking on a connection dot
+            const dotClick = checkConnectionDotClick(x, y);
+            if (dotClick) {
+                if (connectingFrom === null) {
+                    connectingFrom = dotClick;
+                } else {
+                    // Create connection
+                    connections.push({
+                        from: connectingFrom.nodeId,
+                        fromOutcome: connectingFrom.outcome,
+                        to: dotClick.nodeId
+                    });
+                    connectingFrom = null;
+                    updateStats();
+                }
+                render();
+                return;
+            }
+
+            // Check if clicking on a node
+            const clickedNode = getNodeAt(x, y);
+            if (clickedNode) {
+                selectNode(clickedNode);
+                draggingNode = clickedNode;
+                offset = {
+                    x: x - clickedNode.x,
+                    y: y - clickedNode.y
+                };
+                render();
+            } else {
+                // Start dragging canvas
+                isDraggingCanvas = true;
+                dragStart = { x: e.clientX, y: e.clientY };
+                canvas.style.cursor = 'grabbing';
+                if (selectedNode) {
+                    selectedNode = null;
+                    showNoSelection();
+                    render();
+                }
+            }
+        }
+
+        function onMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - canvasOffset.x;
+            const y = e.clientY - rect.top - canvasOffset.y;
+            mousePos = { x, y };
+
+            if (draggingNode) {
+                draggingNode.x = x - offset.x;
+                draggingNode.y = y - offset.y;
+                render();
+            } else if (isDraggingCanvas) {
+                const dx = e.clientX - dragStart.x;
+                const dy = e.clientY - dragStart.y;
+                canvasOffset.x += dx;
+                canvasOffset.y += dy;
+                dragStart = { x: e.clientX, y: e.clientY };
+                render();
+            } else if (connectingFrom) {
+                render();
+            }
+        }
+
+        function onMouseUp(e) {
+            draggingNode = null;
+            isDraggingCanvas = false;
+            canvas.style.cursor = 'grab';
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            // Could add zoom functionality here
+        }
+
+        function getNodeAt(x, y) {
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                const node = nodes[i];
+                const nodeHeight = 120 + (node.outcomes ? node.outcomes.length * 25 : 100);
+                if (x >= node.x && x <= node.x + 180 &&
+                    y >= node.y && y <= node.y + nodeHeight) {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        function checkConnectionDotClick(x, y) {
+            for (let node of nodes) {
+                const outcomes = node.outcomes || {
+                    success_triumph: { cost: 2 },
+                    success_narrow: { cost: 1 },
+                    fail_narrow: { cost: 0 },
+                    fail_catastrophic: { cost: 0 }
+                };
+
+                let yOffset = node.y + 80;
+                for (let outcomeName in outcomes) {
+                    const dotX = node.x + 180 + 4;
+                    const dotY = yOffset + 12;
+
+                    const dist = Math.sqrt((x - dotX) ** 2 + (y - dotY) ** 2);
+                    if (dist < 10) {
+                        return { nodeId: node.id, outcome: outcomeName };
+                    }
+
+                    yOffset += 25;
+                }
+            }
+            return null;
+        }
+
+        function addNode() {
+            const node = {
+                id: `node_${nodeIdCounter++}`,
+                name: 'Nouveau Challenge',
+                type: 'challenge',
+                icon: '⚔️',
+                color: '#ff00ff',
+                dialogue: 'Un challenge apparaît...',
+                isStart: nodes.length === 0,
+                x: 100 + nodes.length * 50 - canvasOffset.x,
+                y: 100 + nodes.length * 30 - canvasOffset.y,
+                outcomes: {
+                    success_triumph: {
+                        text: 'Vous triomphez brillamment.',
+                        cost: 2,
+                        type: 'success'
+                    },
+                    success_narrow: {
+                        text: 'Vous réussissez de justesse.',
+                        cost: 1,
+                        type: 'success'
+                    },
+                    fail_narrow: {
+                        text: 'Vous échouez mais survivez.',
+                        cost: 0,
+                        type: 'fail'
+                    },
+                    fail_catastrophic: {
+                        text: 'Échec catastrophique.',
+                        cost: 0,
+                        type: 'fail'
+                    }
+                }
+            };
+
+            nodes.push(node);
+            selectNode(node);
+            updateStats();
+            render();
+        }
+
+        function deleteSelected() {
+            if (!selectedNode) {
+                alert('Aucun nœud sélectionné');
+                return;
+            }
+
+            if (!confirm(`Supprimer le challenge "${selectedNode.name}" ?`)) return;
+
+            // Remove node
+            nodes = nodes.filter(n => n.id !== selectedNode.id);
+
+            // Remove connections
+            connections = connections.filter(c =>
+                c.from !== selectedNode.id && c.to !== selectedNode.id
+            );
+
+            selectedNode = null;
+            showNoSelection();
+            updateStats();
+            render();
+        }
+
+        function clearAll() {
+            if (!confirm('Effacer tout l\'arbre de décisions ?')) return;
+
+            nodes = [];
+            connections = [];
+            selectedNode = null;
+            connectingFrom = null;
+            nodeIdCounter = 1;
+            showNoSelection();
+            updateStats();
+            render();
+        }
+
+        function selectNode(node) {
+            selectedNode = node;
+
+            // Update sidebar
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('node-editor').style.display = 'block';
+
+            document.getElementById('edit-name').value = node.name;
+            document.getElementById('edit-type').value = node.type;
+            document.getElementById('edit-icon').value = node.icon;
+            document.getElementById('edit-color').value = node.color;
+            document.getElementById('edit-dialogue').value = node.dialogue || '';
+            document.getElementById('edit-is-start').checked = node.isStart || false;
+
+            // Update outcomes
+            if (node.outcomes) {
+                document.getElementById('outcome-success-triumph').value = node.outcomes.success_triumph?.text || '';
+                document.getElementById('cost-success-triumph').value = node.outcomes.success_triumph?.cost || 2;
+
+                document.getElementById('outcome-success-narrow').value = node.outcomes.success_narrow?.text || '';
+                document.getElementById('cost-success-narrow').value = node.outcomes.success_narrow?.cost || 1;
+
+                document.getElementById('outcome-fail-narrow').value = node.outcomes.fail_narrow?.text || '';
+                document.getElementById('cost-fail-narrow').value = node.outcomes.fail_narrow?.cost || 0;
+
+                document.getElementById('outcome-fail-catastrophic').value = node.outcomes.fail_catastrophic?.text || '';
+                document.getElementById('cost-fail-catastrophic').value = node.outcomes.fail_catastrophic?.cost || 0;
+            }
+        }
+
+        function showNoSelection() {
+            document.getElementById('no-selection').style.display = 'block';
+            document.getElementById('node-editor').style.display = 'none';
+        }
+
+        function saveNodeChanges() {
+            if (!selectedNode) return;
+
+            selectedNode.name = document.getElementById('edit-name').value;
+            selectedNode.type = document.getElementById('edit-type').value;
+            selectedNode.icon = document.getElementById('edit-icon').value;
+            selectedNode.color = document.getElementById('edit-color').value;
+            selectedNode.dialogue = document.getElementById('edit-dialogue').value;
+
+            const wasStart = selectedNode.isStart;
+            selectedNode.isStart = document.getElementById('edit-is-start').checked;
+
+            // If this is now the start node, remove start from others
+            if (selectedNode.isStart && !wasStart) {
+                nodes.forEach(n => {
+                    if (n.id !== selectedNode.id) n.isStart = false;
+                });
+            }
+
+            selectedNode.outcomes = {
+                success_triumph: {
+                    text: document.getElementById('outcome-success-triumph').value,
+                    cost: parseInt(document.getElementById('cost-success-triumph').value),
+                    type: 'success'
+                },
+                success_narrow: {
+                    text: document.getElementById('outcome-success-narrow').value,
+                    cost: parseInt(document.getElementById('cost-success-narrow').value),
+                    type: 'success'
+                },
+                fail_narrow: {
+                    text: document.getElementById('outcome-fail-narrow').value,
+                    cost: parseInt(document.getElementById('cost-fail-narrow').value),
+                    type: 'fail'
+                },
+                fail_catastrophic: {
+                    text: document.getElementById('outcome-fail-catastrophic').value,
+                    cost: parseInt(document.getElementById('cost-fail-catastrophic').value),
+                    type: 'fail'
+                }
+            };
+
+            render();
+            alert('Modifications sauvegardées !');
+        }
+
+        function selectEmoji(emoji) {
+            document.getElementById('edit-icon').value = emoji;
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent === emoji);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('node-count').textContent = nodes.length;
+            document.getElementById('connection-count').textContent = connections.length;
+        }
+
+        function exportJSON() {
+            const data = {
+                nodes: nodes,
+                connections: connections
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'narrative-tree.json';
+            a.click();
+
+            alert('Arbre narratif exporté !');
+        }
+
+        function importJSON() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        nodes = data.nodes || [];
+                        connections = data.connections || [];
+
+                        if (nodes.length > 0) {
+                            nodeIdCounter = Math.max(...nodes.map(n =>
+                                parseInt(n.id.replace('node_', ''))
+                            )) + 1;
+                        }
+
+                        selectedNode = null;
+                        showNoSelection();
+                        updateStats();
+                        render();
+                        alert('Arbre narratif importé avec succès !');
+                    } catch (error) {
+                        alert('Erreur lors de l\'import: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            input.click();
+        }
+
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#2a2a2a';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+
+            for (let x = canvasOffset.x % gridSize; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = canvasOffset.y % gridSize; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw connections
+            ctx.lineWidth = 2;
+            for (let conn of connections) {
+                const fromNode = nodes.find(n => n.id === conn.from);
+                const toNode = nodes.find(n => n.id === conn.to);
+
+                if (!fromNode || !toNode) continue;
+
+                // Find the outcome position
+                const outcomes = Object.keys(fromNode.outcomes || {});
+                const outcomeIndex = outcomes.indexOf(conn.fromOutcome);
+
+                const startX = fromNode.x + 180 + canvasOffset.x;
+                const startY = fromNode.y + 80 + (outcomeIndex * 25) + 12 + canvasOffset.y;
+                const endX = toNode.x + canvasOffset.x;
+                const endY = toNode.y + 60 + canvasOffset.y;
+
+                // Draw curved line
+                ctx.strokeStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+
+                const cpX1 = startX + 50;
+                const cpY1 = startY;
+                const cpX2 = endX - 50;
+                const cpY2 = endY;
+
+                ctx.bezierCurveTo(cpX1, cpY1, cpX2, cpY2, endX, endY);
+                ctx.stroke();
+
+                // Draw arrow
+                const angle = Math.atan2(endY - cpY2, endX - cpX2);
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - 10 * Math.cos(angle - Math.PI / 6), endY - 10 * Math.sin(angle - Math.PI / 6));
+                ctx.lineTo(endX - 10 * Math.cos(angle + Math.PI / 6), endY - 10 * Math.sin(angle + Math.PI / 6));
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Draw connection line being created
+            if (connectingFrom) {
+                const fromNode = nodes.find(n => n.id === connectingFrom.nodeId);
+                if (fromNode) {
+                    const outcomes = Object.keys(fromNode.outcomes || {});
+                    const outcomeIndex = outcomes.indexOf(connectingFrom.outcome);
+
+                    const startX = fromNode.x + 180 + canvasOffset.x;
+                    const startY = fromNode.y + 80 + (outcomeIndex * 25) + 12 + canvasOffset.y;
+
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(mousePos.x + canvasOffset.x, mousePos.y + canvasOffset.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+
+            // Draw nodes
+            for (let node of nodes) {
+                const isSelected = node === selectedNode;
+                const x = node.x + canvasOffset.x;
+                const y = node.y + canvasOffset.y;
+
+                // Node background
+                ctx.fillStyle = '#2a2a2a';
+                ctx.strokeStyle = node.isStart ? '#00ff00' : (isSelected ? '#ffd700' : '#666');
+                ctx.lineWidth = 3;
+
+                const nodeHeight = 80 + (node.outcomes ? Object.keys(node.outcomes).length * 25 : 100);
+                ctx.fillRect(x, y, 180, nodeHeight);
+                ctx.strokeRect(x, y, 180, nodeHeight);
+
+                // Node header
+                ctx.fillStyle = node.color || '#ff00ff';
+                ctx.fillRect(x, y, 180, 40);
+
+                // Icon
+                ctx.font = '24px Arial';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(node.icon, x + 10, y + 28);
+
+                // Title
+                ctx.font = 'bold 13px Arial';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(node.name.substring(0, 15), x + 45, y + 20);
+
+                // Type badge
+                ctx.font = '9px Arial';
+                ctx.fillStyle = '#aaa';
+                ctx.fillText(node.type.toUpperCase(), x + 45, y + 33);
+
+                // Outcomes
+                let yOffset = y + 80;
+                const outcomes = node.outcomes || {
+                    success_triumph: { cost: 2 },
+                    success_narrow: { cost: 1 },
+                    fail_narrow: { cost: 0 },
+                    fail_catastrophic: { cost: 0 }
+                };
+
+                for (let outcomeName in outcomes) {
+                    const outcome = outcomes[outcomeName];
+
+                    // Outcome background
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(x + 5, yOffset, 170, 20);
+
+                    // Outcome dot
+                    const dotColor = outcomeName.includes('success') ? '#4CAF50' : '#f44336';
+                    ctx.fillStyle = dotColor;
+                    ctx.beginPath();
+                    ctx.arc(x + 15, yOffset + 10, 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Outcome label
+                    ctx.font = '10px Arial';
+                    ctx.fillStyle = '#fff';
+                    const label = outcomeName.replace('_', ' ').toUpperCase();
+                    ctx.fillText(label.substring(0, 12), x + 28, yOffset + 13);
+
+                    // Cost badge
+                    if (outcome.cost > 0) {
+                        ctx.fillStyle = '#ff6600';
+                        ctx.fillRect(x + 150, yOffset + 3, 18, 14);
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 9px Arial';
+                        ctx.fillText(outcome.cost.toString(), x + 156, yOffset + 13);
+                    }
+
+                    // Connection dot
+                    ctx.fillStyle = '#ffd700';
+                    ctx.strokeStyle = '#1a1a1a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x + 180 + 4, yOffset + 10, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    yOffset += 25;
+                }
+            }
+
+            ctx.lineWidth = 1;
+        }
+
+        // Initialize stats
+        updateStats();
+    </script>
+</body>
+</html>
