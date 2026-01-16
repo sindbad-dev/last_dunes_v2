@@ -1,0 +1,168 @@
+{
+  "mapFile": "assets/level1.png",
+  "gridSize": 40,
+  "startPos": {
+    "x": 16,
+    "y": 25
+  },
+  "walls": [],
+  "water": [],
+  "objects": [],
+  "challenges": [
+    {
+      "id": "node_0",
+      "coordinates": {
+        "x": 14,
+        "y": 18
+      },
+      "triggerRadius": 1,
+      "outcomes": {
+        "success_triumph": {
+          "text": "Vous triomphez brillamment !",
+          "cost": 2,
+          "type": "success",
+          "healthChange": 0
+        },
+        "success_narrow": {
+          "text": "Vous réussissez de justesse.",
+          "cost": 1,
+          "type": "success",
+          "healthChange": 0
+        },
+        "fail_narrow": {
+          "text": "Vous échouez mais survivez.",
+          "cost": 0,
+          "type": "fail",
+          "healthChange": -1
+        },
+        "fail_catastrophic": {
+          "text": "Échec catastrophique !",
+          "cost": 0,
+          "type": "fail",
+          "healthChange": -2
+        }
+      }
+    },
+    {
+      "id": "node_1",
+      "coordinates": {
+        "x": 16,
+        "y": 20
+      },
+      "triggerRadius": 1,
+      "outcomes": {
+        "success_triumph": {
+          "text": "Vous pulvérisez le gardien !",
+          "cost": 2,
+          "type": "success",
+          "healthChange": 0
+        },
+        "success_narrow": {
+          "text": "Vous passez de justesse.",
+          "cost": 1,
+          "type": "success",
+          "healthChange": 0
+        },
+        "fail_narrow": {
+          "text": "Le gardien vous blesse.",
+          "cost": 0,
+          "type": "fail",
+          "healthChange": -1
+        },
+        "fail_catastrophic": {
+          "text": "Le gardien sonne l'alarme !",
+          "cost": 0,
+          "type": "fail",
+          "healthChange": -2
+        }
+      }
+    }
+  ],
+  "narrativeTree": {
+    "nodes": [
+      {
+        "id": "node_0",
+        "name": "Le Gobelin",
+        "type": "challenge",
+        "icon": "👺",
+        "color": "#00ff00",
+        "dialogue": "Un gobelin vicieux bloque votre chemin.",
+        "isStart": true,
+        "x": 50,
+        "y": 50,
+        "outcomes": {
+          "success_triumph": {
+            "text": "Vous triomphez brillamment !",
+            "cost": 2,
+            "type": "success",
+            "healthChange": 0
+          },
+          "success_narrow": {
+            "text": "Vous réussissez de justesse.",
+            "cost": 1,
+            "type": "success",
+            "healthChange": 0
+          },
+          "fail_narrow": {
+            "text": "Vous échouez mais survivez.",
+            "cost": 0,
+            "type": "fail",
+            "healthChange": -1
+          },
+          "fail_catastrophic": {
+            "text": "Échec catastrophique !",
+            "cost": 0,
+            "type": "fail",
+            "healthChange": -2
+          }
+        },
+        "rewardCard": null
+      },
+      {
+        "id": "node_1",
+        "name": "Le Gardien",
+        "type": "challenge",
+        "icon": "⚔️",
+        "color": "#ff00ff",
+        "dialogue": "Un gardien squelette bloque l'entrée.",
+        "isStart": false,
+        "x": 300,
+        "y": 50,
+        "outcomes": {
+          "success_triumph": {
+            "text": "Vous pulvérisez le gardien !",
+            "cost": 2,
+            "type": "success",
+            "healthChange": 0
+          },
+          "success_narrow": {
+            "text": "Vous passez de justesse.",
+            "cost": 1,
+            "type": "success",
+            "healthChange": 0
+          },
+          "fail_narrow": {
+            "text": "Le gardien vous blesse.",
+            "cost": 0,
+            "type": "fail",
+            "healthChange": -1
+          },
+          "fail_catastrophic": {
+            "text": "Le gardien sonne l'alarme !",
+            "cost": 0,
+            "type": "fail",
+            "healthChange": -2
+          }
+        },
+        "rewardCard": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "node_0",
+        "fromOutcome": "success_triumph",
+        "to": "node_1"
+      }
+    ]
+  }
+}
