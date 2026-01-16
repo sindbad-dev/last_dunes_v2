@@ -459,6 +459,7 @@
                         <div class="card-editor-header">
                             <span class="card-editor-title" style="color: #4CAF50;">✓ Réussite Triomphale</span>
                             <span style="font-size: 10px;">Coût: <input type="number" id="cost-success-triumph" value="2" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                            <span style="font-size: 10px; margin-left: 5px;">❤️ PV: <input type="number" id="health-success-triumph" value="0" min="-10" max="10" style="width: 50px; padding: 2px;" title="Changement de points de vie (négatif = perte, positif = gain)"></span>
                         </div>
                         <textarea id="outcome-success-triumph" placeholder="Vous triomphez brillamment..."></textarea>
                         <div class="outcome-preview" id="preview-success-triumph"></div>
@@ -468,6 +469,7 @@
                         <div class="card-editor-header">
                             <span class="card-editor-title" style="color: #8BC34A;">✓ Réussite de Justesse</span>
                             <span style="font-size: 10px;">Coût: <input type="number" id="cost-success-narrow" value="1" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                            <span style="font-size: 10px; margin-left: 5px;">❤️ PV: <input type="number" id="health-success-narrow" value="0" min="-10" max="10" style="width: 50px; padding: 2px;" title="Changement de points de vie (négatif = perte, positif = gain)"></span>
                         </div>
                         <textarea id="outcome-success-narrow" placeholder="Vous réussissez de justesse..."></textarea>
                         <div class="outcome-preview" id="preview-success-narrow"></div>
@@ -477,6 +479,7 @@
                         <div class="card-editor-header">
                             <span class="card-editor-title" style="color: #FF9800;">✗ Échec de Justesse</span>
                             <span style="font-size: 10px;">Coût: <input type="number" id="cost-fail-narrow" value="0" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                            <span style="font-size: 10px; margin-left: 5px;">❤️ PV: <input type="number" id="health-fail-narrow" value="-1" min="-10" max="10" style="width: 50px; padding: 2px;" title="Changement de points de vie (négatif = perte, positif = gain)"></span>
                         </div>
                         <textarea id="outcome-fail-narrow" placeholder="Vous échouez mais survivez..."></textarea>
                         <div class="outcome-preview" id="preview-fail-narrow"></div>
@@ -486,9 +489,72 @@
                         <div class="card-editor-header">
                             <span class="card-editor-title" style="color: #f44336;">✗ Échec Catastrophique</span>
                             <span style="font-size: 10px;">Coût: <input type="number" id="cost-fail-catastrophic" value="0" min="0" max="3" style="width: 40px; padding: 2px;"></span>
+                            <span style="font-size: 10px; margin-left: 5px;">❤️ PV: <input type="number" id="health-fail-catastrophic" value="-2" min="-10" max="10" style="width: 50px; padding: 2px;" title="Changement de points de vie (négatif = perte, positif = gain)"></span>
                         </div>
                         <textarea id="outcome-fail-catastrophic" placeholder="Échec catastrophique..."></textarea>
                         <div class="outcome-preview" id="preview-fail-catastrophic"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎁 Carte Récompense (Optionnelle)</h3>
+                    <p style="font-size: 11px; color: #888; margin-bottom: 10px;">
+                        Définissez une carte spéciale que le joueur recevra après avoir réussi ce challenge.
+                    </p>
+
+                    <div class="form-group">
+                        <label><input type="checkbox" id="reward-enabled"> Activer une carte récompense</label>
+                    </div>
+
+                    <div id="reward-card-config" style="display: none;">
+                        <div class="form-group">
+                            <label>Nom de la carte</label>
+                            <input type="text" id="reward-name" placeholder="Coup du gobelin">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Label affiché</label>
+                            <input type="text" id="reward-label" placeholder="Attaque spéciale">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description de l'effet</label>
+                            <textarea id="reward-description" rows="2" placeholder="Une attaque rapide apprise du gobelin..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Icône</label>
+                            <input type="text" id="reward-icon" value="⚔️" maxlength="2" placeholder="⚔️">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Coût en catastrophe</label>
+                            <input type="number" id="reward-cost" value="1" min="0" max="3">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Type de résultat</label>
+                            <select id="reward-outcome-type">
+                                <option value="success">Réussite</option>
+                                <option value="fail">Échec</option>
+                                <option value="special">Spécial</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Texte de l'outcome</label>
+                            <textarea id="reward-outcome-text" rows="2" placeholder="Vous utilisez la technique du gobelin..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>❤️ Changement de PV</label>
+                            <input type="number" id="reward-health" value="0" min="-10" max="10" title="Négatif = perte, Positif = gain">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nombre d'utilisations</label>
+                            <input type="number" id="reward-uses" value="1" min="1" max="10" placeholder="Nombre de fois utilisable">
+                        </div>
                     </div>
                 </div>
 
@@ -677,24 +743,29 @@
                     success_triumph: {
                         text: 'Vous triomphez brillamment.',
                         cost: 2,
-                        type: 'success'
+                        type: 'success',
+                        healthChange: 0
                     },
                     success_narrow: {
                         text: 'Vous réussissez de justesse.',
                         cost: 1,
-                        type: 'success'
+                        type: 'success',
+                        healthChange: 0
                     },
                     fail_narrow: {
                         text: 'Vous échouez mais survivez.',
                         cost: 0,
-                        type: 'fail'
+                        type: 'fail',
+                        healthChange: -1
                     },
                     fail_catastrophic: {
                         text: 'Échec catastrophique.',
                         cost: 0,
-                        type: 'fail'
+                        type: 'fail',
+                        healthChange: -2
                     }
-                }
+                },
+                rewardCard: null
             };
 
             nodes.push(node);
@@ -756,15 +827,36 @@
             if (node.outcomes) {
                 document.getElementById('outcome-success-triumph').value = node.outcomes.success_triumph?.text || '';
                 document.getElementById('cost-success-triumph').value = node.outcomes.success_triumph?.cost || 2;
+                document.getElementById('health-success-triumph').value = node.outcomes.success_triumph?.healthChange || 0;
 
                 document.getElementById('outcome-success-narrow').value = node.outcomes.success_narrow?.text || '';
                 document.getElementById('cost-success-narrow').value = node.outcomes.success_narrow?.cost || 1;
+                document.getElementById('health-success-narrow').value = node.outcomes.success_narrow?.healthChange || 0;
 
                 document.getElementById('outcome-fail-narrow').value = node.outcomes.fail_narrow?.text || '';
                 document.getElementById('cost-fail-narrow').value = node.outcomes.fail_narrow?.cost || 0;
+                document.getElementById('health-fail-narrow').value = node.outcomes.fail_narrow?.healthChange || -1;
 
                 document.getElementById('outcome-fail-catastrophic').value = node.outcomes.fail_catastrophic?.text || '';
                 document.getElementById('cost-fail-catastrophic').value = node.outcomes.fail_catastrophic?.cost || 0;
+                document.getElementById('health-fail-catastrophic').value = node.outcomes.fail_catastrophic?.healthChange || -2;
+            }
+
+            // Update reward card
+            const rewardEnabled = node.rewardCard !== null && node.rewardCard !== undefined;
+            document.getElementById('reward-enabled').checked = rewardEnabled;
+            document.getElementById('reward-card-config').style.display = rewardEnabled ? 'block' : 'none';
+
+            if (rewardEnabled && node.rewardCard) {
+                document.getElementById('reward-name').value = node.rewardCard.name || '';
+                document.getElementById('reward-label').value = node.rewardCard.label || '';
+                document.getElementById('reward-description').value = node.rewardCard.description || '';
+                document.getElementById('reward-icon').value = node.rewardCard.icon || '⚔️';
+                document.getElementById('reward-cost').value = node.rewardCard.cost || 1;
+                document.getElementById('reward-outcome-type').value = node.rewardCard.outcomeType || 'success';
+                document.getElementById('reward-outcome-text').value = node.rewardCard.outcomeText || '';
+                document.getElementById('reward-health').value = node.rewardCard.healthChange || 0;
+                document.getElementById('reward-uses').value = node.rewardCard.uses || 1;
             }
         }
 
@@ -796,24 +888,46 @@
                 success_triumph: {
                     text: document.getElementById('outcome-success-triumph').value,
                     cost: parseInt(document.getElementById('cost-success-triumph').value),
-                    type: 'success'
+                    type: 'success',
+                    healthChange: parseInt(document.getElementById('health-success-triumph').value)
                 },
                 success_narrow: {
                     text: document.getElementById('outcome-success-narrow').value,
                     cost: parseInt(document.getElementById('cost-success-narrow').value),
-                    type: 'success'
+                    type: 'success',
+                    healthChange: parseInt(document.getElementById('health-success-narrow').value)
                 },
                 fail_narrow: {
                     text: document.getElementById('outcome-fail-narrow').value,
                     cost: parseInt(document.getElementById('cost-fail-narrow').value),
-                    type: 'fail'
+                    type: 'fail',
+                    healthChange: parseInt(document.getElementById('health-fail-narrow').value)
                 },
                 fail_catastrophic: {
                     text: document.getElementById('outcome-fail-catastrophic').value,
                     cost: parseInt(document.getElementById('cost-fail-catastrophic').value),
-                    type: 'fail'
+                    type: 'fail',
+                    healthChange: parseInt(document.getElementById('health-fail-catastrophic').value)
                 }
             };
+
+            // Save reward card
+            const rewardEnabled = document.getElementById('reward-enabled').checked;
+            if (rewardEnabled) {
+                selectedNode.rewardCard = {
+                    name: document.getElementById('reward-name').value,
+                    label: document.getElementById('reward-label').value,
+                    description: document.getElementById('reward-description').value,
+                    icon: document.getElementById('reward-icon').value,
+                    cost: parseInt(document.getElementById('reward-cost').value),
+                    outcomeType: document.getElementById('reward-outcome-type').value,
+                    outcomeText: document.getElementById('reward-outcome-text').value,
+                    healthChange: parseInt(document.getElementById('reward-health').value),
+                    uses: parseInt(document.getElementById('reward-uses').value)
+                };
+            } else {
+                selectedNode.rewardCard = null;
+            }
 
             render();
             alert('Modifications sauvegardées !');
@@ -1058,6 +1172,12 @@
 
             ctx.lineWidth = 1;
         }
+
+        // Event listener for reward card checkbox
+        document.getElementById('reward-enabled').addEventListener('change', function() {
+            const configSection = document.getElementById('reward-card-config');
+            configSection.style.display = this.checked ? 'block' : 'none';
+        });
 
         // Initialize stats
         updateStats();
