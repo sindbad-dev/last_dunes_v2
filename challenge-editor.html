@@ -653,6 +653,16 @@
         }
 
         function addNode() {
+            // Calculate position in a smart grid layout
+            const gridCols = 3;
+            const nodeIndex = nodes.length;
+            const col = nodeIndex % gridCols;
+            const row = Math.floor(nodeIndex / gridCols);
+
+            // Fixed spacing between nodes
+            const spacing = { x: 250, y: 200 };
+            const startPos = { x: 50, y: 50 };
+
             const node = {
                 id: `node_${nodeIdCounter++}`,
                 name: 'Nouveau Challenge',
@@ -661,8 +671,8 @@
                 color: '#ff00ff',
                 dialogue: 'Un challenge apparaît...',
                 isStart: nodes.length === 0,
-                x: 100 + nodes.length * 50 - canvasOffset.x,
-                y: 100 + nodes.length * 30 - canvasOffset.y,
+                x: startPos.x + col * spacing.x,
+                y: startPos.y + row * spacing.y,
                 outcomes: {
                     success_triumph: {
                         text: 'Vous triomphez brillamment.',
