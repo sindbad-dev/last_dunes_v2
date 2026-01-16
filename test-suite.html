@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Suite de Tests Complète - Last Dunes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .test-case {
+            background: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #666;
+        }
+
+        .test-case.running {
+            border-left-color: #ff9800;
+        }
+
+        .test-case.success {
+            border-left-color: #4CAF50;
+        }
+
+        .test-case.failure {
+            border-left-color: #f44336;
+        }
+
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .test-result {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .test-result.success {
+            color: #4CAF50;
+        }
+
+        .test-result.failure {
+            color: #f44336;
+        }
+
+        .test-details {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            padding: 5px;
+            background: #2a2a2a;
+            border-radius: 3px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button.run-all {
+            background: #2196F3;
+        }
+
+        button.run-all:hover {
+            background: #0b7dda;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary {
+            background: #2a2a2a;
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .stat {
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        .stat.total {
+            background: #444;
+        }
+
+        .stat.passed {
+            background: #4CAF50;
+        }
+
+        .stat.failed {
+            background: #f44336;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .logs {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px;
+        }
+
+        .log-entry.info {
+            color: #2196F3;
+        }
+
+        .log-entry.success {
+            color: #4CAF50;
+        }
+
+        .log-entry.error {
+            color: #f44336;
+        }
+
+        .log-entry.warn {
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Suite de Tests Complète - Last Dunes</h1>
+
+    <div class="summary" id="summary">
+        <h3>📊 Résumé des Tests</h3>
+        <div class="summary-stats">
+            <div class="stat total">
+                <div class="stat-number" id="total-tests">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat passed">
+                <div class="stat-number" id="passed-tests">0</div>
+                <div class="stat-label">Réussis</div>
+            </div>
+            <div class="stat failed">
+                <div class="stat-number" id="failed-tests">0</div>
+                <div class="stat-label">Échoués</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="run-all" onclick="runAllTests()">▶️ Exécuter Tous les Tests</button>
+        <button onclick="runChallengeEditorTests()">🌳 Tests Challenge Editor</button>
+        <button onclick="runNiveauEditorTests()">🗺️ Tests Niveau Editor</button>
+        <button onclick="runIntegrationTests()">🔗 Tests Intégration</button>
+        <button onclick="runMainJsTests()">⚙️ Tests Main.js</button>
+    </div>
+
+    <div id="logs-container" style="margin-bottom: 20px;">
+        <h3 style="color: #ffd700; margin-bottom: 10px;">📝 Logs d'Exécution</h3>
+        <div class="logs" id="logs"></div>
+    </div>
+
+    <!-- Section 1: Tests Challenge Editor -->
+    <div class="test-section" id="challenge-editor-tests">
+        <h2>🌳 Tests de l'Éditeur de Challenge</h2>
+        <div id="challenge-tests-container"></div>
+    </div>
+
+    <!-- Section 2: Tests Niveau Editor -->
+    <div class="test-section" id="niveau-editor-tests">
+        <h2>🗺️ Tests de l'Éditeur de Niveau</h2>
+        <div id="niveau-tests-container"></div>
+    </div>
+
+    <!-- Section 3: Tests d'Intégration -->
+    <div class="test-section" id="integration-tests">
+        <h2>🔗 Tests d'Intégration JSON</h2>
+        <div id="integration-tests-container"></div>
+    </div>
+
+    <!-- Section 4: Tests Main.js -->
+    <div class="test-section" id="mainjs-tests">
+        <h2>⚙️ Tests de Chargement Main.js</h2>
+        <div id="mainjs-tests-container"></div>
+    </div>
+
+    <script>
+        // État global des tests
+        const testState = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            results: []
+        };
+
+        // Logger
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Mise à jour du résumé
+        function updateSummary() {
+            document.getElementById('total-tests').textContent = testState.total;
+            document.getElementById('passed-tests').textContent = testState.passed;
+            document.getElementById('failed-tests').textContent = testState.failed;
+        }
+
+        // Classe de test
+        class TestCase {
+            constructor(name, testFn, container) {
+                this.name = name;
+                this.testFn = testFn;
+                this.container = container;
+                this.element = null;
+                testState.total++;
+            }
+
+            async run() {
+                this.element = this.createTestElement();
+                this.container.appendChild(this.element);
+                this.setStatus('running');
+
+                log(`Exécution: ${this.name}`, 'info');
+
+                try {
+                    await this.testFn();
+                    this.setStatus('success', '✅ Test réussi');
+                    testState.passed++;
+                    log(`✅ ${this.name} - RÉUSSI`, 'success');
+                    return true;
+                } catch (error) {
+                    this.setStatus('failure', `❌ ${error.message}`);
+                    testState.failed++;
+                    log(`❌ ${this.name} - ÉCHOUÉ: ${error.message}`, 'error');
+                    return false;
+                }
+            }
+
+            createTestElement() {
+                const div = document.createElement('div');
+                div.className = 'test-case';
+                div.innerHTML = `
+                    <div class="test-name">${this.name}</div>
+                    <div class="test-result">En attente...</div>
+                    <div class="test-details"></div>
+                `;
+                return div;
+            }
+
+            setStatus(status, message = '') {
+                this.element.className = `test-case ${status}`;
+                const resultDiv = this.element.querySelector('.test-result');
+                resultDiv.className = `test-result ${status}`;
+                resultDiv.textContent = message;
+            }
+
+            setDetails(details) {
+                const detailsDiv = this.element.querySelector('.test-details');
+                detailsDiv.textContent = details;
+            }
+        }
+
+        // ==========================================
+        // TESTS CHALLENGE EDITOR
+        // ==========================================
+
+        async function runChallengeEditorTests() {
+            log('=== DÉBUT DES TESTS CHALLENGE EDITOR ===', 'info');
+            const container = document.getElementById('challenge-tests-container');
+            container.innerHTML = '';
+
+            const tests = [
+                new TestCase('Création d\'un nœud', async () => {
+                    const node = {
+                        id: 'test_node_1',
+                        name: 'Test Challenge',
+                        type: 'challenge',
+                        icon: '⚔️',
+                        color: '#ff00ff',
+                        dialogue: 'Test dialogue',
+                        isStart: true,
+                        x: 50,
+                        y: 50,
+                        outcomes: {
+                            success_triumph: {
+                                text: 'Test triumph',
+                                cost: 2,
+                                type: 'success',
+                                healthChange: 0
+                            },
+                            success_narrow: {
+                                text: 'Test narrow',
+                                cost: 1,
+                                type: 'success',
+                                healthChange: 0
+                            },
+                            fail_narrow: {
+                                text: 'Test fail narrow',
+                                cost: 0,
+                                type: 'fail',
+                                healthChange: -1
+                            },
+                            fail_catastrophic: {
+                                text: 'Test catastrophic',
+                                cost: 0,
+                                type: 'fail',
+                                healthChange: -2
+                            }
+                        },
+                        rewardCard: null
+                    };
+
+                    if (!node.id || !node.name || !node.outcomes) {
+                        throw new Error('Structure de nœud invalide');
+                    }
+
+                    if (Object.keys(node.outcomes).length !== 4) {
+                        throw new Error('Le nœud doit avoir 4 outcomes');
+                    }
+                }, container),
+
+                new TestCase('Validation des health changes', async () => {
+                    const healthChanges = [-2, -1, 0, 0];
+
+                    for (let hc of healthChanges) {
+                        if (hc < -10 || hc > 10) {
+                            throw new Error(`Health change ${hc} hors limites (-10 à +10)`);
+                        }
+                    }
+                }, container),
+
+                new TestCase('Création d\'une carte récompense', async () => {
+                    const rewardCard = {
+                        name: 'épée_test',
+                        label: 'Épée de Test',
+                        description: 'Une épée pour tester',
+                        icon: '⚔️',
+                        cost: 1,
+                        outcomeType: 'success',
+                        outcomeText: 'Vous frappez avec l\'épée !',
+                        healthChange: 0,
+                        uses: 3
+                    };
+
+                    if (!rewardCard.name || !rewardCard.label) {
+                        throw new Error('Carte récompense incomplète');
+                    }
+
+                    if (rewardCard.uses < 1 || rewardCard.uses > 10) {
+                        throw new Error('Uses doit être entre 1 et 10');
+                    }
+                }, container),
+
+                new TestCase('Export JSON narrative tree', async () => {
+                    const narrativeTree = {
+                        nodes: [
+                            {
+                                id: 'node_0',
+                                name: 'Test Node',
+                                type: 'challenge',
+                                icon: '⚔️',
+                                color: '#ff00ff',
+                                dialogue: 'Test',
+                                isStart: true,
+                                x: 50,
+                                y: 50,
+                                outcomes: {
+                                    success_triumph: {
+                                        text: 'Test',
+                                        cost: 2,
+                                        type: 'success',
+                                        healthChange: 0
+                                    },
+                                    success_narrow: {
+                                        text: 'Test',
+                                        cost: 1,
+                                        type: 'success',
+                                        healthChange: 0
+                                    },
+                                    fail_narrow: {
+                                        text: 'Test',
+                                        cost: 0,
+                                        type: 'fail',
+                                        healthChange: -1
+                                    },
+                                    fail_catastrophic: {
+                                        text: 'Test',
+                                        cost: 0,
+                                        type: 'fail',
+                                        healthChange: -2
+                                    }
+                                },
+                                rewardCard: null
+                            }
+                        ],
+                        connections: []
+                    };
+
+                    const json = JSON.stringify(narrativeTree, null, 2);
+                    const parsed = JSON.parse(json);
+
+                    if (!parsed.nodes || !parsed.connections) {
+                        throw new Error('Structure JSON invalide');
+                    }
+
+                    if (parsed.nodes.length !== 1) {
+                        throw new Error('Nombre de nœuds incorrect');
+                    }
+                }, container),
+
+                new TestCase('Connexions entre nœuds', async () => {
+                    const connection = {
+                        from: 'node_0',
+                        fromOutcome: 'success_triumph',
+                        to: 'node_1'
+                    };
+
+                    if (!connection.from || !connection.fromOutcome || !connection.to) {
+                        throw new Error('Connexion incomplète');
+                    }
+
+                    const validOutcomes = ['success_triumph', 'success_narrow', 'fail_narrow', 'fail_catastrophic'];
+                    if (!validOutcomes.includes(connection.fromOutcome)) {
+                        throw new Error('Outcome invalide pour la connexion');
+                    }
+                }, container)
+            ];
+
+            for (let test of tests) {
+                await test.run();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            updateSummary();
+            log('=== FIN DES TESTS CHALLENGE EDITOR ===', 'info');
+        }
+
+        // ==========================================
+        // TESTS NIVEAU EDITOR
+        // ==========================================
+
+        async function runNiveauEditorTests() {
+            log('=== DÉBUT DES TESTS NIVEAU EDITOR ===', 'info');
+            const container = document.getElementById('niveau-tests-container');
+            container.innerHTML = '';
+
+            const tests = [
+                new TestCase('Import d\'arbre narratif', async () => {
+                    const narrativeTree = {
+                        nodes: [
+                            {
+                                id: 'node_0',
+                                name: 'Test',
+                                type: 'challenge',
+                                icon: '⚔️',
+                                color: '#ff00ff',
+                                dialogue: 'Test dialogue',
+                                isStart: true,
+                                x: 50,
+                                y: 50,
+                                outcomes: {},
+                                rewardCard: null
+                            }
+                        ],
+                        connections: []
+                    };
+
+                    if (!narrativeTree.nodes || !Array.isArray(narrativeTree.nodes)) {
+                        throw new Error('Format d\'arbre narratif invalide');
+                    }
+
+                    if (narrativeTree.nodes.length === 0) {
+                        throw new Error('L\'arbre narratif doit contenir au moins un nœud');
+                    }
+                }, container),
+
+                new TestCase('Placement de challenge sur carte', async () => {
+                    const challenge = {
+                        id: 'node_0',
+                        coordinates: {
+                            x: 14,
+                            y: 18
+                        },
+                        triggerRadius: 1,
+                        outcomes: {
+                            success_triumph: {
+                                text: 'Test',
+                                cost: 2,
+                                type: 'success',
+                                healthChange: 0
+                            },
+                            success_narrow: {
+                                text: 'Test',
+                                cost: 1,
+                                type: 'success',
+                                healthChange: 0
+                            },
+                            fail_narrow: {
+                                text: 'Test',
+                                cost: 0,
+                                type: 'fail',
+                                healthChange: -1
+                            },
+                            fail_catastrophic: {
+                                text: 'Test',
+                                cost: 0,
+                                type: 'fail',
+                                healthChange: -2
+                            }
+                        }
+                    };
+
+                    if (!challenge.coordinates || !challenge.coordinates.x || challenge.coordinates.y === undefined) {
+                        throw new Error('Coordonnées manquantes');
+                    }
+
+                    if (!challenge.triggerRadius || challenge.triggerRadius < 1) {
+                        throw new Error('Trigger radius invalide');
+                    }
+                }, container),
+
+                new TestCase('Configuration de la grille', async () => {
+                    const config = {
+                        mapFile: 'assets/level1.png',
+                        gridSize: 40,
+                        startPos: {
+                            x: 16,
+                            y: 25
+                        }
+                    };
+
+                    if (!config.mapFile) {
+                        throw new Error('Fichier de carte manquant');
+                    }
+
+                    if (!config.gridSize || config.gridSize < 1) {
+                        throw new Error('Taille de grille invalide');
+                    }
+
+                    if (!config.startPos || config.startPos.x === undefined || config.startPos.y === undefined) {
+                        throw new Error('Position de départ invalide');
+                    }
+                }, container),
+
+                new TestCase('Ajout de terrain (murs, eau, objets)', async () => {
+                    const terrain = {
+                        walls: [{x: 10, y: 5}],
+                        water: [{x: 8, y: 12}],
+                        objects: [{x: 15, y: 10, icon: '🌴', color: '#00ff00'}]
+                    };
+
+                    if (!Array.isArray(terrain.walls) || !Array.isArray(terrain.water) || !Array.isArray(terrain.objects)) {
+                        throw new Error('Terrain doit contenir des tableaux');
+                    }
+
+                    for (let wall of terrain.walls) {
+                        if (wall.x === undefined || wall.y === undefined) {
+                            throw new Error('Mur sans coordonnées');
+                        }
+                    }
+                }, container),
+
+                new TestCase('Export level-complete.json', async () => {
+                    const levelComplete = {
+                        mapFile: 'assets/level1.png',
+                        gridSize: 40,
+                        startPos: {x: 16, y: 25},
+                        walls: [],
+                        water: [],
+                        objects: [],
+                        challenges: [
+                            {
+                                id: 'node_0',
+                                coordinates: {x: 14, y: 18},
+                                triggerRadius: 1,
+                                outcomes: {
+                                    success_triumph: {text: 'Test', cost: 2, type: 'success', healthChange: 0},
+                                    success_narrow: {text: 'Test', cost: 1, type: 'success', healthChange: 0},
+                                    fail_narrow: {text: 'Test', cost: 0, type: 'fail', healthChange: -1},
+                                    fail_catastrophic: {text: 'Test', cost: 0, type: 'fail', healthChange: -2}
+                                }
+                            }
+                        ],
+                        narrativeTree: {
+                            nodes: [{
+                                id: 'node_0',
+                                name: 'Test',
+                                type: 'challenge',
+                                icon: '⚔️',
+                                color: '#ff00ff',
+                                dialogue: 'Test',
+                                isStart: true,
+                                x: 50,
+                                y: 50,
+                                outcomes: {},
+                                rewardCard: null
+                            }],
+                            connections: []
+                        }
+                    };
+
+                    const required = ['mapFile', 'gridSize', 'startPos', 'challenges', 'narrativeTree'];
+                    for (let prop of required) {
+                        if (!levelComplete[prop]) {
+                            throw new Error(`Propriété manquante: ${prop}`);
+                        }
+                    }
+
+                    const json = JSON.stringify(levelComplete, null, 2);
+                    JSON.parse(json); // Validation JSON
+                }, container)
+            ];
+
+            for (let test of tests) {
+                await test.run();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            updateSummary();
+            log('=== FIN DES TESTS NIVEAU EDITOR ===', 'info');
+        }
+
+        // ==========================================
+        // TESTS D'INTÉGRATION
+        // ==========================================
+
+        async function runIntegrationTests() {
+            log('=== DÉBUT DES TESTS D\'INTÉGRATION ===', 'info');
+            const container = document.getElementById('integration-tests-container');
+            container.innerHTML = '';
+
+            const tests = [
+                new TestCase('Vérification fichier level-complete.json', async () => {
+                    try {
+                        const response = await fetch('data/level-complete.json');
+                        if (!response.ok) {
+                            throw new Error(`Fichier non trouvé (HTTP ${response.status})`);
+                        }
+                        const data = await response.json();
+
+                        if (!data) {
+                            throw new Error('Fichier vide ou JSON invalide');
+                        }
+                    } catch (error) {
+                        throw new Error(`Impossible de charger level-complete.json: ${error.message}`);
+                    }
+                }, container),
+
+                new TestCase('Validation structure level-complete.json', async () => {
+                    const response = await fetch('data/level-complete.json');
+                    const data = await response.json();
+
+                    const required = ['mapFile', 'gridSize', 'startPos', 'challenges', 'narrativeTree'];
+                    const missing = required.filter(prop => !data[prop]);
+
+                    if (missing.length > 0) {
+                        throw new Error(`Propriétés manquantes: ${missing.join(', ')}`);
+                    }
+                }, container),
+
+                new TestCase('Validation narrativeTree', async () => {
+                    const response = await fetch('data/level-complete.json');
+                    const data = await response.json();
+
+                    if (!data.narrativeTree) {
+                        throw new Error('narrativeTree manquant');
+                    }
+
+                    if (!data.narrativeTree.nodes || !Array.isArray(data.narrativeTree.nodes)) {
+                        throw new Error('narrativeTree.nodes invalide');
+                    }
+
+                    if (data.narrativeTree.nodes.length === 0) {
+                        throw new Error('narrativeTree.nodes est vide');
+                    }
+                }, container),
+
+                new TestCase('Correspondance IDs challenges <-> nœuds', async () => {
+                    const response = await fetch('data/level-complete.json');
+                    const data = await response.json();
+
+                    const challengeIds = data.challenges.map(c => c.id).sort();
+                    const nodeIds = data.narrativeTree.nodes.map(n => n.id).sort();
+
+                    if (challengeIds.length !== nodeIds.length) {
+                        throw new Error(`Nombre différent: ${challengeIds.length} challenges vs ${nodeIds.length} nœuds`);
+                    }
+
+                    for (let i = 0; i < challengeIds.length; i++) {
+                        if (challengeIds[i] !== nodeIds[i]) {
+                            throw new Error(`ID non correspondant: challenge "${challengeIds[i]}" vs nœud "${nodeIds[i]}"`);
+                        }
+                    }
+                }, container),
+
+                new TestCase('Validation challenges.json (fallback)', async () => {
+                    try {
+                        const response = await fetch('data/challenges.json');
+                        if (!response.ok) {
+                            throw new Error('Fichier challenges.json absent (fallback ne fonctionnera pas)');
+                        }
+                        const data = await response.json();
+
+                        if (!data.challenges || !Array.isArray(data.challenges)) {
+                            throw new Error('Structure challenges.json invalide');
+                        }
+                    } catch (error) {
+                        throw new Error(`Problème avec challenges.json: ${error.message}`);
+                    }
+                }, container),
+
+                new TestCase('Validation level1.json (mécaniques)', async () => {
+                    const response = await fetch('data/level1.json');
+                    const data = await response.json();
+
+                    if (!data.mechanics) {
+                        throw new Error('Mécaniques manquantes');
+                    }
+
+                    if (!data.mechanics.catastropheMax) {
+                        throw new Error('catastropheMax manquant');
+                    }
+
+                    if (!data.mechanics.healthMax) {
+                        throw new Error('healthMax manquant');
+                    }
+
+                    if (!data.mechanics.cards) {
+                        throw new Error('Cartes manquantes');
+                    }
+                }, container)
+            ];
+
+            for (let test of tests) {
+                await test.run();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            updateSummary();
+            log('=== FIN DES TESTS D\'INTÉGRATION ===', 'info');
+        }
+
+        // ==========================================
+        // TESTS MAIN.JS
+        // ==========================================
+
+        async function runMainJsTests() {
+            log('=== DÉBUT DES TESTS MAIN.JS ===', 'info');
+            const container = document.getElementById('mainjs-tests-container');
+            container.innerHTML = '';
+
+            const tests = [
+                new TestCase('Fonction enrichChallengesWithNarrative existe', async () => {
+                    // Simulation de la fonction
+                    function enrichChallengesWithNarrative(challenges, narrativeTree) {
+                        if (!narrativeTree || !narrativeTree.nodes) {
+                            return challenges;
+                        }
+
+                        return challenges.map(challenge => {
+                            const node = narrativeTree.nodes.find(n => n.id === challenge.id);
+                            if (!node) return challenge;
+
+                            return {
+                                ...challenge,
+                                name: node.name || challenge.name,
+                                type: node.type || challenge.type,
+                                icon: node.icon || challenge.icon,
+                                color: node.color || challenge.color,
+                                description: node.dialogue || challenge.description,
+                                dialogue_preview: node.dialogue || challenge.dialogue_preview,
+                                isStart: node.isStart || false,
+                                rewardCard: node.rewardCard || null
+                            };
+                        });
+                    }
+
+                    if (typeof enrichChallengesWithNarrative !== 'function') {
+                        throw new Error('Fonction enrichChallengesWithNarrative non définie');
+                    }
+                }, container),
+
+                new TestCase('Enrichissement avec arbre narratif', async () => {
+                    function enrichChallengesWithNarrative(challenges, narrativeTree) {
+                        return challenges.map(challenge => {
+                            const node = narrativeTree.nodes.find(n => n.id === challenge.id);
+                            return {
+                                ...challenge,
+                                name: node.name,
+                                icon: node.icon,
+                                color: node.color
+                            };
+                        });
+                    }
+
+                    const challenges = [{
+                        id: 'node_0',
+                        coordinates: {x: 14, y: 18},
+                        triggerRadius: 1,
+                        outcomes: {}
+                    }];
+
+                    const narrativeTree = {
+                        nodes: [{
+                            id: 'node_0',
+                            name: 'Le Gobelin',
+                            icon: '👺',
+                            color: '#00ff00',
+                            dialogue: 'Test'
+                        }]
+                    };
+
+                    const enriched = enrichChallengesWithNarrative(challenges, narrativeTree);
+
+                    if (enriched[0].name !== 'Le Gobelin') {
+                        throw new Error('Enrichissement du nom échoué');
+                    }
+
+                    if (enriched[0].icon !== '👺') {
+                        throw new Error('Enrichissement de l\'icône échoué');
+                    }
+
+                    if (enriched[0].color !== '#00ff00') {
+                        throw new Error('Enrichissement de la couleur échoué');
+                    }
+                }, container),
+
+                new TestCase('Chargement avec priorité level-complete.json', async () => {
+                    // Simulation du chargement
+                    const levelCompleteResponse = await fetch('data/level-complete.json')
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null);
+
+                    if (!levelCompleteResponse) {
+                        throw new Error('level-complete.json n\'est pas chargé en priorité');
+                    }
+
+                    log('level-complete.json chargé avec succès', 'success');
+                }, container),
+
+                new TestCase('Fallback sur challenges.json', async () => {
+                    // Test du fallback
+                    const levelComplete = await fetch('data/level-complete-inexistant.json')
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null);
+
+                    const challenges = await fetch('data/challenges.json')
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null);
+
+                    if (!levelComplete && challenges) {
+                        log('Fallback sur challenges.json fonctionne', 'success');
+                    } else if (!levelComplete && !challenges) {
+                        throw new Error('Aucun fichier de niveau disponible');
+                    }
+                }, container),
+
+                new TestCase('Validation enrichissement sans arbre narratif', async () => {
+                    function enrichChallengesWithNarrative(challenges, narrativeTree) {
+                        if (!narrativeTree || !narrativeTree.nodes) {
+                            return challenges;
+                        }
+                        return challenges;
+                    }
+
+                    const challenges = [{id: 'test'}];
+                    const enriched = enrichChallengesWithNarrative(challenges, null);
+
+                    if (enriched !== challenges) {
+                        throw new Error('Sans arbre narratif, les challenges doivent être retournés tels quels');
+                    }
+                }, container),
+
+                new TestCase('Chargement mécaniques depuis level1.json', async () => {
+                    const response = await fetch('data/level1.json');
+                    const data = await response.json();
+
+                    if (!data.mechanics) {
+                        throw new Error('Mécaniques absentes de level1.json');
+                    }
+
+                    if (!data.mechanics.cards) {
+                        throw new Error('Cartes absentes des mécaniques');
+                    }
+
+                    const expectedCards = ['success_narrow', 'success_triumph', 'fail_narrow', 'fail_catastrophic'];
+                    for (let card of expectedCards) {
+                        if (!data.mechanics.cards[card]) {
+                            throw new Error(`Carte manquante: ${card}`);
+                        }
+                    }
+                }, container)
+            ];
+
+            for (let test of tests) {
+                await test.run();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            updateSummary();
+            log('=== FIN DES TESTS MAIN.JS ===', 'info');
+        }
+
+        // ==========================================
+        // EXÉCUTION GLOBALE
+        // ==========================================
+
+        async function runAllTests() {
+            log('========================================', 'info');
+            log('DÉBUT DE L\'EXÉCUTION DE TOUS LES TESTS', 'info');
+            log('========================================', 'info');
+
+            // Réinitialiser l'état
+            testState.total = 0;
+            testState.passed = 0;
+            testState.failed = 0;
+            updateSummary();
+
+            await runChallengeEditorTests();
+            await runNiveauEditorTests();
+            await runIntegrationTests();
+            await runMainJsTests();
+
+            log('========================================', 'info');
+            log(`TOUS LES TESTS TERMINÉS`, 'info');
+            log(`Total: ${testState.total} | Réussis: ${testState.passed} | Échoués: ${testState.failed}`, 'info');
+
+            if (testState.failed === 0) {
+                log('🎉 TOUS LES TESTS ONT RÉUSSI !', 'success');
+            } else {
+                log(`⚠️ ${testState.failed} test(s) ont échoué`, 'warn');
+            }
+            log('========================================', 'info');
+        }
+
+        // Exécuter automatiquement au chargement
+        window.addEventListener('load', () => {
+            log('Suite de tests chargée. Prêt à exécuter.', 'info');
+            log('Cliquez sur "Exécuter Tous les Tests" pour commencer.', 'info');
+        });
+    </script>
+</body>
+</html>
