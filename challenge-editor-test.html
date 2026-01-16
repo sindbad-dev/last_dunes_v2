@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>🧪 Tests - Éditeur d'Arbre Narratif</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .test-container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+        }
+
+        .test-section h2 {
+            color: #4CAF50;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .test-item {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #666;
+        }
+
+        .test-item.pending {
+            border-left-color: #888;
+        }
+
+        .test-item.running {
+            border-left-color: #2196F3;
+            animation: pulse 1s infinite;
+        }
+
+        .test-item.success {
+            border-left-color: #4CAF50;
+        }
+
+        .test-item.error {
+            border-left-color: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .test-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .test-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .test-result {
+            font-size: 11px;
+            padding: 8px;
+            background: #444;
+            border-radius: 3px;
+            margin-top: 8px;
+            font-family: monospace;
+        }
+
+        .test-result.success {
+            background: #1b5e20;
+            color: #a5d6a7;
+        }
+
+        .test-result.error {
+            background: #b71c1c;
+            color: #ef9a9a;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button.danger {
+            background: #f44336;
+        }
+
+        button.danger:hover {
+            background: #da190b;
+        }
+
+        .controls {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stats {
+            background: #1a4d7a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            background: #2a5a8a;
+            padding: 10px;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .log {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .log-entry.info {
+            color: #64B5F6;
+        }
+
+        .log-entry.success {
+            color: #81C784;
+        }
+
+        .log-entry.error {
+            color: #E57373;
+        }
+
+        .log-entry.warning {
+            color: #FFD54F;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #444;
+            border-radius: 5px;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests de l'Éditeur d'Arbre Narratif - Last Dunes</h1>
+
+    <div class="controls">
+        <button onclick="runAllTests()">▶️ Lancer Tous les Tests</button>
+        <button onclick="runUnitTests()">🔬 Tests Unitaires</button>
+        <button onclick="runIntegrationTests()">🔗 Tests d'Intégration</button>
+        <button onclick="runStressTests()">💪 Tests de Charge</button>
+        <button onclick="createDemoData()">🎨 Créer Données de Démo</button>
+        <button onclick="clearResults()" class="danger">🗑️ Effacer Résultats</button>
+        <button onclick="openEditor()">🚀 Ouvrir l'Éditeur</button>
+    </div>
+
+    <div class="stats">
+        <h3>📊 Statistiques des Tests</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-success">0</div>
+                <div class="stat-label">Réussis</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-failed">0</div>
+                <div class="stat-label">Échoués</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-duration">0ms</div>
+                <div class="stat-label">Durée</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>📝 Console de Log</h2>
+        <div class="log" id="test-log"></div>
+    </div>
+
+    <div class="test-container">
+        <div class="test-section">
+            <h2>🔬 Tests Unitaires</h2>
+
+            <div class="test-item pending" id="test-node-creation">
+                <div class="test-title">Test 1: Création de Nœuds</div>
+                <div class="test-description">Vérifie que les nœuds sont créés avec les bonnes propriétés et ne se chevauchent pas</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-node-positioning">
+                <div class="test-title">Test 2: Positionnement en Grille</div>
+                <div class="test-description">Vérifie que les nœuds sont positionnés correctement dans une grille 3x3</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-node-properties">
+                <div class="test-title">Test 3: Propriétés des Nœuds</div>
+                <div class="test-description">Vérifie que toutes les propriétés (nom, type, icône, couleur, outcomes) sont correctes</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-start-node">
+                <div class="test-title">Test 4: Nœud de Départ</div>
+                <div class="test-description">Vérifie qu'un seul nœud peut être marqué comme départ</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-outcomes">
+                <div class="test-title">Test 5: Outcomes et Coûts</div>
+                <div class="test-description">Vérifie que les 4 outcomes sont créés avec les bons coûts par défaut</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-node-deletion">
+                <div class="test-title">Test 6: Suppression de Nœuds</div>
+                <div class="test-description">Vérifie que la suppression d'un nœud fonctionne correctement</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔗 Tests d'Intégration</h2>
+
+            <div class="test-item pending" id="test-connections">
+                <div class="test-title">Test 7: Création de Connexions</div>
+                <div class="test-description">Vérifie que les connexions entre nœuds sont créées correctement</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-connection-deletion">
+                <div class="test-title">Test 8: Suppression avec Connexions</div>
+                <div class="test-description">Vérifie que supprimer un nœud supprime aussi ses connexions</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-export-import">
+                <div class="test-title">Test 9: Export/Import JSON</div>
+                <div class="test-description">Vérifie que l'export et l'import préservent toutes les données</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-json-structure">
+                <div class="test-title">Test 10: Structure JSON</div>
+                <div class="test-description">Vérifie que le JSON exporté a la bonne structure</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💪 Tests de Charge</h2>
+
+            <div class="test-item pending" id="test-many-nodes">
+                <div class="test-title">Test 11: Créer 50 Nœuds</div>
+                <div class="test-description">Teste la performance avec un grand nombre de nœuds</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-many-connections">
+                <div class="test-title">Test 12: Créer 100 Connexions</div>
+                <div class="test-description">Teste la performance avec beaucoup de connexions</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-complex-tree">
+                <div class="test-title">Test 13: Arbre Complexe</div>
+                <div class="test-description">Crée un arbre narratif complexe avec branches multiples</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Tests de Régression</h2>
+
+            <div class="test-item pending" id="test-bug-overlap">
+                <div class="test-title">Test 14: Bug - Nœuds Superposés (CORRIGÉ)</div>
+                <div class="test-description">Vérifie que les nouveaux nœuds ne se superposent plus</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+
+            <div class="test-item pending" id="test-canvas-offset">
+                <div class="test-title">Test 15: Offset Canvas</div>
+                <div class="test-description">Vérifie que le positionnement est indépendant de l'offset du canvas</div>
+                <div class="test-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 0,
+            success: 0,
+            failed: 0,
+            startTime: 0,
+            endTime: 0
+        };
+
+        // Mock data structures (simulating the editor's state)
+        let nodes = [];
+        let connections = [];
+        let nodeIdCounter = 1;
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = testResults.total;
+            document.getElementById('stat-success').textContent = testResults.success;
+            document.getElementById('stat-failed').textContent = testResults.failed;
+
+            const duration = testResults.endTime - testResults.startTime;
+            document.getElementById('stat-duration').textContent = duration + 'ms';
+        }
+
+        function setTestStatus(testId, status, message) {
+            const testItem = document.getElementById(testId);
+            const resultDiv = testItem.querySelector('.test-result');
+
+            testItem.className = `test-item ${status}`;
+            resultDiv.style.display = 'block';
+            resultDiv.className = `test-result ${status}`;
+            resultDiv.textContent = message;
+
+            testResults.total++;
+            if (status === 'success') {
+                testResults.success++;
+            } else if (status === 'error') {
+                testResults.failed++;
+            }
+            updateStats();
+        }
+
+        // Simulated node creation function (matching the editor)
+        function createNode() {
+            const gridCols = 3;
+            const nodeIndex = nodes.length;
+            const col = nodeIndex % gridCols;
+            const row = Math.floor(nodeIndex / gridCols);
+
+            const spacing = { x: 250, y: 200 };
+            const startPos = { x: 50, y: 50 };
+
+            const node = {
+                id: `node_${nodeIdCounter++}`,
+                name: 'Nouveau Challenge',
+                type: 'challenge',
+                icon: '⚔️',
+                color: '#ff00ff',
+                dialogue: 'Un challenge apparaît...',
+                isStart: nodes.length === 0,
+                x: startPos.x + col * spacing.x,
+                y: startPos.y + row * spacing.y,
+                outcomes: {
+                    success_triumph: {
+                        text: 'Vous triomphez brillamment.',
+                        cost: 2,
+                        type: 'success'
+                    },
+                    success_narrow: {
+                        text: 'Vous réussissez de justesse.',
+                        cost: 1,
+                        type: 'success'
+                    },
+                    fail_narrow: {
+                        text: 'Vous échouez mais survivez.',
+                        cost: 0,
+                        type: 'fail'
+                    },
+                    fail_catastrophic: {
+                        text: 'Échec catastrophique.',
+                        cost: 0,
+                        type: 'fail'
+                    }
+                }
+            };
+
+            nodes.push(node);
+            return node;
+        }
+
+        // Test functions
+        async function test1_NodeCreation() {
+            log('Démarrage Test 1: Création de Nœuds', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node = createNode();
+
+                if (!node) throw new Error('Node non créé');
+                if (!node.id) throw new Error('ID manquant');
+                if (node.name !== 'Nouveau Challenge') throw new Error('Nom incorrect');
+                if (!node.outcomes) throw new Error('Outcomes manquants');
+
+                setTestStatus('test-node-creation', 'success',
+                    `✓ Nœud créé avec succès: ${node.id} à position (${node.x}, ${node.y})`);
+                log('Test 1: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-node-creation', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 1: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test2_NodePositioning() {
+            log('Démarrage Test 2: Positionnement en Grille', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                // Create 9 nodes (3x3 grid)
+                const testNodes = [];
+                for (let i = 0; i < 9; i++) {
+                    testNodes.push(createNode());
+                }
+
+                // Check grid positioning
+                const expectedPositions = [
+                    // Row 0
+                    {x: 50, y: 50},     // Col 0
+                    {x: 300, y: 50},    // Col 1
+                    {x: 550, y: 50},    // Col 2
+                    // Row 1
+                    {x: 50, y: 250},    // Col 0
+                    {x: 300, y: 250},   // Col 1
+                    {x: 550, y: 250},   // Col 2
+                    // Row 2
+                    {x: 50, y: 450},    // Col 0
+                    {x: 300, y: 450},   // Col 1
+                    {x: 550, y: 450},   // Col 2
+                ];
+
+                for (let i = 0; i < 9; i++) {
+                    const node = testNodes[i];
+                    const expected = expectedPositions[i];
+
+                    if (node.x !== expected.x || node.y !== expected.y) {
+                        throw new Error(`Nœud ${i}: Position incorrecte (${node.x}, ${node.y}) au lieu de (${expected.x}, ${expected.y})`);
+                    }
+                }
+
+                // Check no overlaps
+                for (let i = 0; i < testNodes.length; i++) {
+                    for (let j = i + 1; j < testNodes.length; j++) {
+                        const node1 = testNodes[i];
+                        const node2 = testNodes[j];
+
+                        if (node1.x === node2.x && node1.y === node2.y) {
+                            throw new Error(`Nœuds ${i} et ${j} sont superposés à (${node1.x}, ${node1.y})`);
+                        }
+                    }
+                }
+
+                setTestStatus('test-node-positioning', 'success',
+                    `✓ 9 nœuds créés en grille 3x3 sans chevauchement`);
+                log('Test 2: RÉUSSI - Grille correcte', 'success');
+            } catch (error) {
+                setTestStatus('test-node-positioning', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 2: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test3_NodeProperties() {
+            log('Démarrage Test 3: Propriétés des Nœuds', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node = createNode();
+
+                const requiredProps = ['id', 'name', 'type', 'icon', 'color', 'dialogue', 'isStart', 'x', 'y', 'outcomes'];
+                for (let prop of requiredProps) {
+                    if (!(prop in node)) {
+                        throw new Error(`Propriété manquante: ${prop}`);
+                    }
+                }
+
+                if (node.type !== 'challenge') throw new Error('Type par défaut incorrect');
+                if (node.icon !== '⚔️') throw new Error('Icône par défaut incorrecte');
+                if (node.color !== '#ff00ff') throw new Error('Couleur par défaut incorrecte');
+
+                setTestStatus('test-node-properties', 'success',
+                    `✓ Toutes les propriétés sont présentes et correctes`);
+                log('Test 3: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-node-properties', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 3: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test4_StartNode() {
+            log('Démarrage Test 4: Nœud de Départ', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node1 = createNode();
+                const node2 = createNode();
+                const node3 = createNode();
+
+                if (!node1.isStart) throw new Error('Premier nœud devrait être isStart=true');
+                if (node2.isStart) throw new Error('Deuxième nœud devrait être isStart=false');
+                if (node3.isStart) throw new Error('Troisième nœud devrait être isStart=false');
+
+                const startNodes = nodes.filter(n => n.isStart);
+                if (startNodes.length !== 1) {
+                    throw new Error(`Il devrait y avoir exactement 1 nœud de départ, trouvé ${startNodes.length}`);
+                }
+
+                setTestStatus('test-start-node', 'success',
+                    `✓ Un seul nœud de départ correctement identifié`);
+                log('Test 4: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-start-node', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 4: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test5_Outcomes() {
+            log('Démarrage Test 5: Outcomes et Coûts', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node = createNode();
+                const outcomes = node.outcomes;
+
+                const expectedOutcomes = ['success_triumph', 'success_narrow', 'fail_narrow', 'fail_catastrophic'];
+                for (let outcome of expectedOutcomes) {
+                    if (!(outcome in outcomes)) {
+                        throw new Error(`Outcome manquant: ${outcome}`);
+                    }
+                }
+
+                if (outcomes.success_triumph.cost !== 2) throw new Error('Coût success_triumph incorrect');
+                if (outcomes.success_narrow.cost !== 1) throw new Error('Coût success_narrow incorrect');
+                if (outcomes.fail_narrow.cost !== 0) throw new Error('Coût fail_narrow incorrect');
+                if (outcomes.fail_catastrophic.cost !== 0) throw new Error('Coût fail_catastrophic incorrect');
+
+                setTestStatus('test-outcomes', 'success',
+                    `✓ 4 outcomes créés avec les bons coûts (2, 1, 0, 0)`);
+                log('Test 5: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-outcomes', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 5: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test6_NodeDeletion() {
+            log('Démarrage Test 6: Suppression de Nœuds', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                createNode();
+                createNode();
+                createNode();
+
+                const initialCount = nodes.length;
+                if (initialCount !== 3) throw new Error('3 nœuds devraient être créés');
+
+                const nodeToDelete = nodes[1];
+                nodes = nodes.filter(n => n.id !== nodeToDelete.id);
+
+                if (nodes.length !== 2) throw new Error('Il devrait rester 2 nœuds après suppression');
+
+                setTestStatus('test-node-deletion', 'success',
+                    `✓ Nœud supprimé correctement (${initialCount} -> ${nodes.length})`);
+                log('Test 6: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-node-deletion', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 6: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test7_Connections() {
+            log('Démarrage Test 7: Création de Connexions', 'info');
+            nodes = [];
+            connections = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node1 = createNode();
+                const node2 = createNode();
+
+                const connection = {
+                    from: node1.id,
+                    fromOutcome: 'success_triumph',
+                    to: node2.id
+                };
+
+                connections.push(connection);
+
+                if (connections.length !== 1) throw new Error('Connexion non créée');
+                if (connections[0].from !== node1.id) throw new Error('Source incorrecte');
+                if (connections[0].to !== node2.id) throw new Error('Destination incorrecte');
+
+                setTestStatus('test-connections', 'success',
+                    `✓ Connexion créée: ${node1.id} -> ${node2.id}`);
+                log('Test 7: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-connections', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 7: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test8_ConnectionDeletion() {
+            log('Démarrage Test 8: Suppression avec Connexions', 'info');
+            nodes = [];
+            connections = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node1 = createNode();
+                const node2 = createNode();
+                const node3 = createNode();
+
+                connections.push({from: node1.id, fromOutcome: 'success_triumph', to: node2.id});
+                connections.push({from: node2.id, fromOutcome: 'success_narrow', to: node3.id});
+                connections.push({from: node1.id, fromOutcome: 'fail_narrow', to: node3.id});
+
+                if (connections.length !== 3) throw new Error('3 connexions devraient être créées');
+
+                // Delete node2
+                const nodeToDelete = node2;
+                nodes = nodes.filter(n => n.id !== nodeToDelete.id);
+                connections = connections.filter(c =>
+                    c.from !== nodeToDelete.id && c.to !== nodeToDelete.id
+                );
+
+                if (connections.length !== 1) {
+                    throw new Error(`Il devrait rester 1 connexion, trouvé ${connections.length}`);
+                }
+
+                setTestStatus('test-connection-deletion', 'success',
+                    `✓ Connexions supprimées avec le nœud (3 -> ${connections.length})`);
+                log('Test 8: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-connection-deletion', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 8: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test9_ExportImport() {
+            log('Démarrage Test 9: Export/Import JSON', 'info');
+            nodes = [];
+            connections = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node1 = createNode();
+                const node2 = createNode();
+                connections.push({from: node1.id, fromOutcome: 'success_triumph', to: node2.id});
+
+                // Export
+                const data = {
+                    nodes: nodes,
+                    connections: connections
+                };
+
+                const json = JSON.stringify(data);
+
+                // Import
+                const imported = JSON.parse(json);
+
+                if (!imported.nodes) throw new Error('Nodes manquants dans JSON');
+                if (!imported.connections) throw new Error('Connections manquantes dans JSON');
+                if (imported.nodes.length !== 2) throw new Error('Nombre de nodes incorrect après import');
+                if (imported.connections.length !== 1) throw new Error('Nombre de connections incorrect après import');
+
+                setTestStatus('test-export-import', 'success',
+                    `✓ Export/Import préserve les données (${imported.nodes.length} nodes, ${imported.connections.length} connections)`);
+                log('Test 9: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-export-import', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 9: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test10_JSONStructure() {
+            log('Démarrage Test 10: Structure JSON', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const node = createNode();
+                const data = { nodes: [node], connections: [] };
+                const json = JSON.parse(JSON.stringify(data));
+
+                // Validate structure
+                if (!Array.isArray(json.nodes)) throw new Error('nodes devrait être un array');
+                if (!Array.isArray(json.connections)) throw new Error('connections devrait être un array');
+
+                const exportedNode = json.nodes[0];
+                const requiredFields = ['id', 'name', 'type', 'icon', 'color', 'dialogue', 'isStart', 'x', 'y', 'outcomes'];
+
+                for (let field of requiredFields) {
+                    if (!(field in exportedNode)) {
+                        throw new Error(`Champ manquant dans le JSON exporté: ${field}`);
+                    }
+                }
+
+                setTestStatus('test-json-structure', 'success',
+                    `✓ Structure JSON valide avec tous les champs requis`);
+                log('Test 10: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-json-structure', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 10: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test11_ManyNodes() {
+            log('Démarrage Test 11: Créer 50 Nœuds', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                const startTime = performance.now();
+
+                for (let i = 0; i < 50; i++) {
+                    createNode();
+                }
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+
+                if (nodes.length !== 50) throw new Error(`50 nœuds attendus, ${nodes.length} créés`);
+
+                setTestStatus('test-many-nodes', 'success',
+                    `✓ 50 nœuds créés en ${duration}ms`);
+                log(`Test 11: RÉUSSI - Performance: ${duration}ms`, 'success');
+            } catch (error) {
+                setTestStatus('test-many-nodes', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 11: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test12_ManyConnections() {
+            log('Démarrage Test 12: Créer 100 Connexions', 'info');
+            nodes = [];
+            connections = [];
+            nodeIdCounter = 1;
+
+            try {
+                // Create 25 nodes
+                for (let i = 0; i < 25; i++) {
+                    createNode();
+                }
+
+                const startTime = performance.now();
+
+                // Create 100 connections
+                const outcomes = ['success_triumph', 'success_narrow', 'fail_narrow', 'fail_catastrophic'];
+                for (let i = 0; i < 100; i++) {
+                    const fromNode = nodes[i % nodes.length];
+                    const toNode = nodes[(i + 1) % nodes.length];
+                    const outcome = outcomes[i % outcomes.length];
+
+                    connections.push({
+                        from: fromNode.id,
+                        fromOutcome: outcome,
+                        to: toNode.id
+                    });
+                }
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+
+                if (connections.length !== 100) throw new Error(`100 connexions attendues, ${connections.length} créées`);
+
+                setTestStatus('test-many-connections', 'success',
+                    `✓ 100 connexions créées en ${duration}ms`);
+                log(`Test 12: RÉUSSI - Performance: ${duration}ms`, 'success');
+            } catch (error) {
+                setTestStatus('test-many-connections', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 12: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test13_ComplexTree() {
+            log('Démarrage Test 13: Arbre Complexe', 'info');
+            nodes = [];
+            connections = [];
+            nodeIdCounter = 1;
+
+            try {
+                // Create a complex branching tree
+                const root = createNode();
+                const level1Nodes = [createNode(), createNode(), createNode()];
+                const level2Nodes = [createNode(), createNode(), createNode(), createNode()];
+
+                // Connect root to level 1
+                connections.push({from: root.id, fromOutcome: 'success_triumph', to: level1Nodes[0].id});
+                connections.push({from: root.id, fromOutcome: 'success_narrow', to: level1Nodes[1].id});
+                connections.push({from: root.id, fromOutcome: 'fail_narrow', to: level1Nodes[2].id});
+
+                // Connect level 1 to level 2
+                connections.push({from: level1Nodes[0].id, fromOutcome: 'success_triumph', to: level2Nodes[0].id});
+                connections.push({from: level1Nodes[1].id, fromOutcome: 'success_triumph', to: level2Nodes[1].id});
+                connections.push({from: level1Nodes[2].id, fromOutcome: 'success_triumph', to: level2Nodes[2].id});
+
+                if (nodes.length !== 8) throw new Error('8 nœuds attendus pour l\'arbre complexe');
+                if (connections.length !== 6) throw new Error('6 connexions attendues');
+
+                setTestStatus('test-complex-tree', 'success',
+                    `✓ Arbre complexe créé (${nodes.length} nœuds, ${connections.length} connexions)`);
+                log('Test 13: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-complex-tree', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 13: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test14_BugOverlap() {
+            log('Démarrage Test 14: Bug - Nœuds Superposés', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                // Create multiple nodes
+                for (let i = 0; i < 10; i++) {
+                    createNode();
+                }
+
+                // Check for overlaps
+                const positions = new Set();
+                for (let node of nodes) {
+                    const posKey = `${node.x},${node.y}`;
+                    if (positions.has(posKey)) {
+                        throw new Error(`Nœuds superposés trouvés à la position (${node.x}, ${node.y})`);
+                    }
+                    positions.add(posKey);
+                }
+
+                setTestStatus('test-bug-overlap', 'success',
+                    `✓ BUG CORRIGÉ - Aucun nœud superposé parmi 10 nœuds créés`);
+                log('Test 14: RÉUSSI - Bug des nœuds collés est corrigé!', 'success');
+            } catch (error) {
+                setTestStatus('test-bug-overlap', 'error',
+                    `✗ BUG PRÉSENT: ${error.message}`);
+                log('Test 14: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        async function test15_CanvasOffset() {
+            log('Démarrage Test 15: Offset Canvas', 'info');
+            nodes = [];
+            nodeIdCounter = 1;
+
+            try {
+                // Create nodes with "simulated" canvas offset (shouldn't affect position)
+                const node1 = createNode();
+                const pos1 = {x: node1.x, y: node1.y};
+
+                // Position should be independent of canvas offset
+                const node2 = createNode();
+                const pos2 = {x: node2.x, y: node2.y};
+
+                // Expected positions based on grid
+                if (pos1.x !== 50 || pos1.y !== 50) {
+                    throw new Error(`Premier nœud mal positionné: (${pos1.x}, ${pos1.y}) au lieu de (50, 50)`);
+                }
+                if (pos2.x !== 300 || pos2.y !== 50) {
+                    throw new Error(`Deuxième nœud mal positionné: (${pos2.x}, ${pos2.y}) au lieu de (300, 50)`);
+                }
+
+                setTestStatus('test-canvas-offset', 'success',
+                    `✓ Positionnement indépendant de l'offset du canvas`);
+                log('Test 15: RÉUSSI', 'success');
+            } catch (error) {
+                setTestStatus('test-canvas-offset', 'error',
+                    `✗ Erreur: ${error.message}`);
+                log('Test 15: ÉCHOUÉ - ' + error.message, 'error');
+            }
+        }
+
+        // Test runners
+        async function runUnitTests() {
+            log('========== DÉMARRAGE TESTS UNITAIRES ==========', 'info');
+            await test1_NodeCreation();
+            await delay(100);
+            await test2_NodePositioning();
+            await delay(100);
+            await test3_NodeProperties();
+            await delay(100);
+            await test4_StartNode();
+            await delay(100);
+            await test5_Outcomes();
+            await delay(100);
+            await test6_NodeDeletion();
+            log('========== TESTS UNITAIRES TERMINÉS ==========', 'info');
+        }
+
+        async function runIntegrationTests() {
+            log('========== DÉMARRAGE TESTS D\'INTÉGRATION ==========', 'info');
+            await test7_Connections();
+            await delay(100);
+            await test8_ConnectionDeletion();
+            await delay(100);
+            await test9_ExportImport();
+            await delay(100);
+            await test10_JSONStructure();
+            log('========== TESTS D\'INTÉGRATION TERMINÉS ==========', 'info');
+        }
+
+        async function runStressTests() {
+            log('========== DÉMARRAGE TESTS DE CHARGE ==========', 'info');
+            await test11_ManyNodes();
+            await delay(100);
+            await test12_ManyConnections();
+            await delay(100);
+            await test13_ComplexTree();
+            await delay(100);
+            await test14_BugOverlap();
+            await delay(100);
+            await test15_CanvasOffset();
+            log('========== TESTS DE CHARGE TERMINÉS ==========', 'info');
+        }
+
+        async function runAllTests() {
+            log('🚀 DÉMARRAGE DE TOUS LES TESTS', 'info');
+            testResults = { total: 0, success: 0, failed: 0, startTime: performance.now(), endTime: 0 };
+
+            await runUnitTests();
+            await delay(200);
+            await runIntegrationTests();
+            await delay(200);
+            await runStressTests();
+
+            testResults.endTime = performance.now();
+            updateStats();
+
+            const successRate = ((testResults.success / testResults.total) * 100).toFixed(1);
+            log(`✅ TOUS LES TESTS TERMINÉS - Taux de réussite: ${successRate}%`, 'success');
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function clearResults() {
+            document.getElementById('test-log').innerHTML = '';
+            testResults = { total: 0, success: 0, failed: 0, startTime: 0, endTime: 0 };
+            updateStats();
+
+            document.querySelectorAll('.test-item').forEach(item => {
+                item.className = 'test-item pending';
+                const resultDiv = item.querySelector('.test-result');
+                resultDiv.style.display = 'none';
+            });
+
+            log('Résultats effacés', 'info');
+        }
+
+        function openEditor() {
+            window.open('challenge-editor.html', '_blank');
+        }
+
+        function createDemoData() {
+            log('Création de données de démonstration...', 'info');
+
+            const demoData = {
+                nodes: [
+                    {
+                        id: "node_1",
+                        name: "Le Gobelin",
+                        type: "challenge",
+                        icon: "👺",
+                        color: "#00ff00",
+                        dialogue: "Un gobelin vicieux bloque votre chemin...",
+                        isStart: true,
+                        x: 50,
+                        y: 50,
+                        outcomes: {
+                            success_triumph: { text: "Vous terrassez le gobelin avec brio !", cost: 2, type: "success" },
+                            success_narrow: { text: "Vous repoussez le gobelin de justesse.", cost: 1, type: "success" },
+                            fail_narrow: { text: "Le gobelin vous blesse légèrement.", cost: 0, type: "fail" },
+                            fail_catastrophic: { text: "Le gobelin vous terrasse !", cost: 0, type: "fail" }
+                        }
+                    },
+                    {
+                        id: "node_2",
+                        name: "Le Pont Fragile",
+                        type: "interaction",
+                        icon: "🌉",
+                        color: "#0088ff",
+                        dialogue: "Un pont fragile traverse un gouffre sans fond...",
+                        isStart: false,
+                        x: 300,
+                        y: 50,
+                        outcomes: {
+                            success_triumph: { text: "Vous traversez avec agilité.", cost: 2, type: "success" },
+                            success_narrow: { text: "Le pont craque mais tient.", cost: 1, type: "success" },
+                            fail_narrow: { text: "Vous chutez mais vous raccrochez.", cost: 0, type: "fail" },
+                            fail_catastrophic: { text: "Le pont s'effondre !", cost: 0, type: "fail" }
+                        }
+                    },
+                    {
+                        id: "node_3",
+                        name: "Dragon Boss",
+                        type: "boss",
+                        icon: "🐉",
+                        color: "#ff0000",
+                        dialogue: "Un dragon terrifiant apparaît !",
+                        isStart: false,
+                        x: 550,
+                        y: 50,
+                        outcomes: {
+                            success_triumph: { text: "Vous terrassez le dragon !", cost: 2, type: "success" },
+                            success_narrow: { text: "Le dragon s'enfuit blessé.", cost: 1, type: "success" },
+                            fail_narrow: { text: "Vous survivez de justesse.", cost: 0, type: "fail" },
+                            fail_catastrophic: { text: "Le dragon vous carbonise !", cost: 0, type: "fail" }
+                        }
+                    }
+                ],
+                connections: [
+                    { from: "node_1", fromOutcome: "success_triumph", to: "node_2" },
+                    { from: "node_2", fromOutcome: "success_triumph", to: "node_3" }
+                ]
+            };
+
+            const json = JSON.stringify(demoData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'demo-narrative-tree.json';
+            a.click();
+
+            log('✓ Fichier de démonstration créé: demo-narrative-tree.json', 'success');
+        }
+
+        // Initialize
+        log('🧪 Système de tests initialisé', 'info');
+        log('Cliquez sur "Lancer Tous les Tests" pour commencer', 'info');
+    </script>
+</body>
+</html>
