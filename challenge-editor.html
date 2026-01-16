@@ -375,6 +375,61 @@
             border-color: #4CAF50;
             background: #4CAF50;
         }
+
+        /* Quick selection list */
+        .quick-select-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .quick-select-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #3a3a3a;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .quick-select-item:hover {
+            background: #444;
+            border-color: #666;
+        }
+
+        .quick-select-item.selected {
+            border-color: #ffd700;
+            background: #4a4a4a;
+        }
+
+        .quick-select-item .icon {
+            font-size: 20px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .quick-select-item .name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .quick-select-item .type {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .quick-select-item .start-badge {
+            font-size: 10px;
+            background: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -385,6 +440,9 @@
         <button onclick="exportJSON()">💾 Exporter JSON</button>
         <button onclick="importJSON()">📥 Importer JSON</button>
         <button onclick="clearAll()" class="danger">🔥 Tout Effacer</button>
+        <span style="font-size: 11px; color: #888; margin-left: auto;">
+            ⌨️ Flèches: Naviguer | Suppr: Effacer
+        </span>
     </div>
 
     <div id="main-container">
@@ -398,6 +456,14 @@
         </div>
 
         <div id="sidebar">
+            <!-- Quick selection list -->
+            <div id="quick-selection" class="section">
+                <h3>🎯 Sélection Rapide</h3>
+                <div id="quick-select-list" class="quick-select-list">
+                    <p style="font-size: 11px; color: #888;">Aucun challenge créé</p>
+                </div>
+            </div>
+
             <div id="no-selection" class="section">
                 <h3>📝 Aucune sélection</h3>
                 <p style="font-size: 11px; color: #888;">Cliquez sur un nœud pour l'éditer, ou créez-en un nouveau.</p>
@@ -858,11 +924,15 @@
                 document.getElementById('reward-health').value = node.rewardCard.healthChange || 0;
                 document.getElementById('reward-uses').value = node.rewardCard.uses || 1;
             }
+
+            // Update quick select list to highlight selected node
+            updateQuickSelectList();
         }
 
         function showNoSelection() {
             document.getElementById('no-selection').style.display = 'block';
             document.getElementById('node-editor').style.display = 'none';
+            updateQuickSelectList();
         }
 
         function saveNodeChanges() {
@@ -929,6 +999,7 @@
                 selectedNode.rewardCard = null;
             }
 
+            updateQuickSelectList();
             render();
             alert('Modifications sauvegardées !');
         }
@@ -943,6 +1014,59 @@
         function updateStats() {
             document.getElementById('node-count').textContent = nodes.length;
             document.getElementById('connection-count').textContent = connections.length;
+            updateQuickSelectList();
+        }
+
+        function updateQuickSelectList() {
+            const listContainer = document.getElementById('quick-select-list');
+
+            if (nodes.length === 0) {
+                listContainer.innerHTML = '<p style="font-size: 11px; color: #888;">Aucun challenge créé</p>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            nodes.forEach((node, index) => {
+                const item = document.createElement('div');
+                item.className = 'quick-select-item';
+                if (node === selectedNode) {
+                    item.classList.add('selected');
+                }
+
+                item.innerHTML = `
+                    <span class="icon">${node.icon}</span>
+                    <div style="flex: 1;">
+                        <div class="name">${node.name}</div>
+                        <div class="type">${node.type}</div>
+                    </div>
+                    ${node.isStart ? '<span class="start-badge">START</span>' : ''}
+                `;
+
+                item.onclick = () => {
+                    selectNode(node);
+                    render();
+                };
+
+                listContainer.appendChild(item);
+            });
+        }
+
+        function selectNodeByIndex(direction) {
+            if (nodes.length === 0) return;
+
+            let currentIndex = selectedNode ? nodes.indexOf(selectedNode) : -1;
+            let newIndex;
+
+            if (direction === 'next') {
+                newIndex = (currentIndex + 1) % nodes.length;
+            } else if (direction === 'prev') {
+                newIndex = currentIndex <= 0 ? nodes.length - 1 : currentIndex - 1;
+            }
+
+            if (newIndex !== undefined && nodes[newIndex]) {
+                selectNode(nodes[newIndex]);
+                render();
+            }
         }
 
         function exportJSON() {
@@ -1091,14 +1215,26 @@
                 const x = node.x + canvasOffset.x;
                 const y = node.y + canvasOffset.y;
 
+                const nodeHeight = 80 + (node.outcomes ? Object.keys(node.outcomes).length * 25 : 100);
+
+                // Add glow effect for selected node
+                if (isSelected) {
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                }
+
                 // Node background
                 ctx.fillStyle = '#2a2a2a';
                 ctx.strokeStyle = node.isStart ? '#00ff00' : (isSelected ? '#ffd700' : '#666');
-                ctx.lineWidth = 3;
+                ctx.lineWidth = isSelected ? 4 : 3;
 
-                const nodeHeight = 80 + (node.outcomes ? Object.keys(node.outcomes).length * 25 : 100);
                 ctx.fillRect(x, y, 180, nodeHeight);
                 ctx.strokeRect(x, y, 180, nodeHeight);
+
+                // Reset shadow
+                ctx.shadowBlur = 0;
 
                 // Node header
                 ctx.fillStyle = node.color || '#ff00ff';
@@ -1177,6 +1313,48 @@
         document.getElementById('reward-enabled').addEventListener('change', function() {
             const configSection = document.getElementById('reward-card-config');
             configSection.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Keyboard shortcuts for navigation
+        document.addEventListener('keydown', function(e) {
+            // Don't trigger shortcuts if user is typing in an input/textarea
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            switch(e.key) {
+                case 'ArrowRight':
+                case 'ArrowDown':
+                    e.preventDefault();
+                    selectNodeByIndex('next');
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                    e.preventDefault();
+                    selectNodeByIndex('prev');
+                    break;
+                case 'Delete':
+                case 'Backspace':
+                    e.preventDefault();
+                    if (selectedNode) {
+                        if (confirm('Supprimer ce challenge ?')) {
+                            deleteSelected();
+                        }
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    if (selectedNode) {
+                        selectedNode = null;
+                        showNoSelection();
+                        render();
+                    }
+                    if (connectingFrom) {
+                        connectingFrom = null;
+                        render();
+                    }
+                    break;
+            }
         });
 
         // Initialize stats
