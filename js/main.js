@@ -4,80 +4,120 @@ const ui = new UIManager();
 const logic = new GameLogic(ui);
 const engine = new MapEngine("gameCanvas");
 
-// Chargement des données (challenges.json prioritaire, level1.json en fallback)
-Promise.all([
-    fetch('data/challenges.json').then(r => r.ok ? r.json() : null),
-    fetch('data/level1.json').then(r => r.ok ? r.json() : null)
-])
-.then(([challengesData, gameData]) => {
-    console.log("Fichiers chargés:", challengesData ? "challenges.json ✅" : "challenges.json ❌", gameData ? "level1.json ✅" : "level1.json ❌");
-
-    let finalData;
-
-    // Si challenges.json existe avec mechanics complets, l'utiliser en standalone
-    if (challengesData && challengesData.mechanics) {
-        const levelInfo = {
-            name: "Niveau Personnalisé",
-            mapFile: challengesData.mapFile,
-            gridSize: challengesData.gridSize,
-            startPos: challengesData.startPos
-        };
-
-        engine.loadMap(levelInfo);
-        engine.placeInteractables(challengesData.challenges);
-        engine.loadTerrain(challengesData.walls, challengesData.water, challengesData.objects);
-        console.log(`✅ ${challengesData.challenges.length} challenges chargés depuis challenges.json (standalone)`);
-
-        // Use challenges.json as complete data source
-        finalData = {
-            mechanics: challengesData.mechanics,
-            challenges: challengesData.challenges
-        };
-    } else if (challengesData) {
-        // Legacy format: challenges.json without mechanics, need level1.json fallback
-        if (!gameData) {
-            throw new Error("challenges.json existe mais level1.json est manquant. Utilisez l'éditeur pour exporter un fichier complet.");
-        }
-
-        const levelInfo = {
-            name: "Niveau Personnalisé",
-            mapFile: challengesData.mapFile,
-            gridSize: challengesData.gridSize,
-            startPos: challengesData.startPos
-        };
-
-        engine.loadMap(levelInfo);
-        engine.placeInteractables(challengesData.challenges);
-        engine.loadTerrain(challengesData.walls, challengesData.water, challengesData.objects);
-        console.log(`⚠️ ${challengesData.challenges.length} challenges chargés depuis challenges.json (format legacy)`);
-
-        // Override healthMax from challenges.json if available
-        if (challengesData.maxHealth) {
-            gameData.mechanics.healthMax = challengesData.maxHealth;
-        }
-
-        finalData = gameData;
-    } else if (gameData) {
-        // Fallback complet sur level1.json
-        engine.loadMap(gameData.levelInfo);
-        engine.placeInteractables(gameData.challenges);
-        console.log(`✅ ${gameData.challenges.length} challenges chargés depuis level1.json (fallback)`);
-
-        finalData = gameData;
-    } else {
-        throw new Error("Aucun fichier de niveau trouvé (challenges.json ou level1.json manquants)");
+/**
+ * Enrichit les challenges avec les données de l'arbre narratif
+ */
+function enrichChallengesWithNarrative(challenges, narrativeTree) {
+    if (!narrativeTree || !narrativeTree.nodes) {
+        console.warn("⚠️ Pas d'arbre narratif fourni, utilisation des challenges bruts");
+        return challenges;
     }
 
-    // Initialiser les mécaniques de jeu
-    logic.init(finalData);
-    ui.init(finalData.mechanics.cards);
+    console.log(`🔄 Enrichissement de ${challenges.length} challenges avec l'arbre narratif`);
 
-    // Initialize health bar with starting values
-    const startingHealth = finalData.mechanics.healthMax || 3;
-    ui.updateHealthBar(startingHealth, startingHealth);
+    return challenges.map(challenge => {
+        // Trouver le nœud narratif correspondant
+        const node = narrativeTree.nodes.find(n => n.id === challenge.id);
 
-    // Initialize persistent deck
-    ui.initPersistentDeck(logic);
+        if (!node) {
+            console.warn(`⚠️ Nœud narratif non trouvé pour ${challenge.id}`);
+            return challenge;
+        }
+
+        // Enrichir le challenge avec les données narratives
+        const enriched = {
+            ...challenge,
+            name: node.name || challenge.name,
+            type: node.type || challenge.type,
+            icon: node.icon || challenge.icon,
+            color: node.color || challenge.color,
+            description: node.dialogue || challenge.description,
+            dialogue_preview: node.dialogue || challenge.dialogue_preview,
+            isStart: node.isStart || false,
+            rewardCard: node.rewardCard || null
+        };
+
+        console.log(`✅ Challenge enrichi: ${enriched.name} (${enriched.id})`);
+        return enriched;
+    });
+}
+
+// Chargement des données
+// Priorité 1: level-complete.json (fichier complet exporté depuis niveau-editor)
+// Priorité 2: challenges.json (ancien format)
+// Fallback: level1.json
+Promise.all([
+    fetch('data/level-complete.json')
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    fetch('data/challenges.json')
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    fetch('data/level1.json').then(r => r.json())
+])
+.then(([levelCompleteData, challengesData, gameData]) => {
+    console.log("Fichiers chargés:", {
+        levelComplete: levelCompleteData ? '✅' : '❌',
+        challenges: challengesData ? '✅' : '❌',
+        level1: gameData ? '✅' : '❌'
+    });
+
+    let levelData = null;
+    let loadSource = '';
+
+    // Déterminer quelle source utiliser
+    if (levelCompleteData) {
+        levelData = levelCompleteData;
+        loadSource = 'level-complete.json';
+        console.log("📦 Utilisation de level-complete.json (format complet avec arbre narratif)");
+    } else if (challengesData) {
+        levelData = challengesData;
+        loadSource = 'challenges.json';
+        console.log("📦 Utilisation de challenges.json (ancien format)");
+    } else {
+        levelData = gameData;
+        loadSource = 'level1.json';
+        console.log("📦 Fallback sur level1.json");
+    }
+
+    // Configurer le niveau
+    const levelInfo = {
+        name: levelData.name || "Niveau Personnalisé",
+        mapFile: levelData.mapFile,
+        gridSize: levelData.gridSize,
+        startPos: levelData.startPos
+    };
+
+    // Charger la carte
+    engine.loadMap(levelInfo);
+    console.log(`🗺️ Carte chargée: ${levelInfo.mapFile}`);
+
+    // Charger le terrain si disponible
+    if (levelData.walls || levelData.water || levelData.objects) {
+        engine.loadTerrain(
+            levelData.walls || [],
+            levelData.water || [],
+            levelData.objects || []
+        );
+        console.log(`🌍 Terrain chargé: ${levelData.walls?.length || 0} murs, ${levelData.water?.length || 0} eau, ${levelData.objects?.length || 0} objets`);
+    }
+
+    // Enrichir et charger les challenges
+    let challenges = levelData.challenges || [];
+
+    // Si on a un arbre narratif, enrichir les challenges avec
+    if (levelData.narrativeTree) {
+        challenges = enrichChallengesWithNarrative(challenges, levelData.narrativeTree);
+        console.log(`🌳 ${challenges.length} challenges enrichis avec l'arbre narratif`);
+    }
+
+    // Placer les challenges sur la carte
+    engine.placeInteractables(challenges);
+    console.log(`✅ ${challenges.length} challenges chargés depuis ${loadSource}`);
+
+    // Utiliser level1.json pour les mécaniques de jeu
+    logic.init(gameData);
+    ui.init(gameData.mechanics.cards);
 
     // Boucle de jeu
     engine.onPlayerMove((pos) => {
@@ -90,8 +130,9 @@ Promise.all([
 
     engine.start();
     console.log("✅ Jeu démarré avec succès!");
+    console.log(`📍 Source: ${loadSource}`);
 })
 .catch(error => {
-    console.error("Erreur lors du chargement:", error);
+    console.error("❌ Erreur lors du chargement:", error);
     alert("Erreur: " + error.message + "\n\nAssurez-vous d'ouvrir le fichier via un serveur web (pas en file://)");
 });
