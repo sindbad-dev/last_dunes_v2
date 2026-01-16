@@ -1,87 +1,455 @@
-# 🎮 Guide d'Intégration - Level Complete JSON
+# 🎮 Guide d'Intégration - Last Dunes
 
 ## Introduction
 
-Ce guide explique comment intégrer le fichier `level-complete.json` exporté depuis l'éditeur de niveau dans votre jeu Last Dunes. Vous apprendrez où placer le fichier, comment modifier le code pour le charger, et comment organiser vos niveaux.
+Ce guide explique comment intégrer votre niveau créé avec les éditeurs dans le jeu Last Dunes. Le système charge automatiquement `level-complete.json` si présent, avec fallback intelligent sur les anciens formats.
 
 ---
 
 ## 📋 Table des Matières
 
 1. [Workflow Complet](#workflow-complet)
-2. [Structure du Fichier Exporté](#structure-du-fichier-exporté)
-3. [Organisation des Fichiers](#organisation-des-fichiers)
-4. [Intégration dans le Jeu](#intégration-dans-le-jeu)
-5. [Code d'Exemple](#code-dexemple)
-6. [Méthodes d'Intégration](#méthodes-dintégration)
-7. [Gestion Multi-Niveaux](#gestion-multi-niveaux)
-8. [Débogage](#débogage)
+2. [Placement du Fichier](#placement-du-fichier)
+3. [Système de Chargement](#système-de-chargement)
+4. [Vérification](#vérification)
+5. [Débogage](#débogage)
+6. [Multi-Niveaux](#multi-niveaux)
 
 ---
 
 ## 1. Workflow Complet
 
+### Vue d'Ensemble
+
+```
+1. CRÉATION              2. PLACEMENT            3. INTÉGRATION
+   challenge-editor        niveau-editor           Jeu principal
+        ↓                      ↓                        ↓
+narrative-tree.json    level-complete.json       Chargement auto
+```
+
+---
+
 ### Étape 1 : Créer l'Arbre Narratif 🌳
 
 **Fichier** : `challenge-editor.html`
 
-1. Ouvrez `challenge-editor.html` dans votre navigateur
-2. Créez vos challenges (nœuds)
-3. Configurez pour chaque challenge :
-   - Nom, icône, couleur
-   - Type (challenge, interaction, boss)
-   - Dialogue de prévisualisation
-   - 4 outcomes (triumph, narrow, fail narrow, fail catastrophic)
-   - Points de vie pour chaque outcome
-   - Carte récompense optionnelle
-4. Reliez les challenges entre eux via les points de connexion
-5. Cliquez sur **💾 Exporter JSON**
-6. Sauvegardez le fichier : `narrative-tree.json`
+**Actions** :
+1. Créez vos challenges (➕ Nouveau Challenge)
+2. Pour chaque challenge :
+   - **Propriétés** : Nom, icône, couleur, type
+   - **Dialogue** : Texte de prévisualisation
+   - **4 Outcomes** : Triumph, Narrow, Fail Narrow, Fail Catastrophic
+   - **Points de Vie** : -10 à +10 pour chaque outcome
+   - **Carte Récompense** : Optionnelle
+3. Reliez les challenges via les points de connexion dorés
+4. **💾 Exporter JSON** → Sauvegardez `narrative-tree.json`
 
-**Résultat** : Fichier `narrative-tree.json` contenant l'arbre de décision complet
+**Raccourcis Utiles** :
+- `Flèche Droite/Bas` : Challenge suivant
+- `Flèche Gauche/Haut` : Challenge précédent
+- `Suppr` : Supprimer le challenge sélectionné
 
 ---
 
-### Étape 2 : Placer les Challenges sur la Carte 🗺️
+### Étape 2 : Placer sur la Carte 🗺️
 
 **Fichier** : `niveau-editor.html`
 
-1. Ouvrez `niveau-editor.html` dans votre navigateur
-2. Allez dans l'onglet **Carte**
-   - Chargez votre image de carte (PNG/JPG)
-   - Configurez la grille (taille, position de départ)
-3. Allez dans l'onglet **Terrain** (optionnel)
-   - Placez les murs
-   - Placez les zones d'eau
-   - Placez les objets décoratifs
-4. Allez dans l'onglet **Challenges**
-   - Cliquez sur **📥 Importer Arbre Narratif**
-   - Sélectionnez votre fichier `narrative-tree.json`
-   - Vous voyez maintenant la **Bibliothèque de Challenges**
-5. Pour chaque challenge :
-   - Cliquez sur **Placer** dans la bibliothèque
-   - Cliquez sur la carte pour positionner le challenge
-   - Le challenge apparaît avec son icône, couleur et rayon de déclenchement
-6. Cliquez sur **💾 Exporter Niveau Complet**
-7. Sauvegardez le fichier : `level-complete.json`
+**Actions** :
 
-**Résultat** : Fichier `level-complete.json` contenant carte + challenges + arbre narratif
+#### Onglet Carte
+1. **Charger l'image** : Upload ou URL d'une image PNG/JPG
+2. **Configurer la grille** :
+   - Taille des cellules (ex: 40px)
+   - Position de départ du joueur (x, y)
+
+#### Onglet Terrain (Optionnel)
+1. **Murs** : Obstacles infranchissables
+2. **Eau** : Zones aquatiques
+3. **Objets** : Éléments décoratifs (arbres, rochers, etc.)
+
+#### Onglet Challenges
+1. **📥 Importer Arbre Narratif** → Sélectionnez `narrative-tree.json`
+2. La **Bibliothèque de Challenges** apparaît avec :
+   - Icône, nom, type de chaque challenge
+   - Nombre d'outcomes
+   - Statut de placement (✓ placé ou ✗ non placé)
+3. Pour chaque challenge :
+   - Cliquez sur **Placer** dans la bibliothèque
+   - Cliquez sur la carte à l'endroit désiré
+   - Le challenge apparaît avec son icône et rayon
+4. **💾 Exporter Niveau Complet** → Sauvegardez `level-complete.json`
 
 ---
 
 ### Étape 3 : Intégrer dans le Jeu 🎯
 
-**Fichier** : `data/level-complete.json` (à placer)
+**Actions** :
 
-1. Placez `level-complete.json` dans le dossier `data/`
-2. Modifiez `js/main.js` pour charger ce fichier
-3. Testez le niveau dans le jeu
+1. **Placez le fichier** dans le dossier `data/`
+   ```bash
+   cp ~/Downloads/level-complete.json data/
+   ```
+
+2. **C'est tout !** Le jeu charge automatiquement le fichier
+
+3. **Testez** :
+   ```bash
+   # Lancez un serveur web
+   python3 -m http.server 8000
+
+   # Ouvrez votre navigateur
+   # http://localhost:8000
+   ```
+
+4. **Vérifiez la console** (F12) :
+   ```
+   📦 Utilisation de level-complete.json (format complet avec arbre narratif)
+   🗺️ Carte chargée: assets/level1.png
+   🌳 X challenges enrichis avec l'arbre narratif
+   ✅ Jeu démarré avec succès!
+   ```
 
 ---
 
-## 2. Structure du Fichier Exporté
+## 2. Placement du Fichier
 
-### Structure Complète de `level-complete.json`
+### Structure Attendue
+
+```
+last_dunes_v2/
+├── index.html
+├── data/
+│   ├── level-complete.json    ← PLACEZ VOTRE FICHIER ICI
+│   ├── level1.json             (mécaniques de jeu)
+│   └── challenges.json         (ancien format, fallback)
+└── assets/
+    └── level1.png              (votre image de carte)
+```
+
+### Nom du Fichier
+
+**Important** : Le nom doit être **exactement** :
+```
+level-complete.json
+```
+
+**Pas** :
+- ❌ `level_complete.json` (underscore)
+- ❌ `levelcomplete.json` (pas de tiret)
+- ❌ `Level-Complete.json` (majuscule)
+
+### Chemin Complet
+
+Le fichier doit être accessible à :
+```
+data/level-complete.json
+```
+
+---
+
+## 3. Système de Chargement
+
+### Priorité de Chargement
+
+`js/main.js` charge les fichiers dans cet ordre :
+
+| Priorité | Fichier | Format | Usage |
+|----------|---------|--------|-------|
+| **1** | `data/level-complete.json` | Moderne | Carte + Arbre narratif complet |
+| **2** | `data/challenges.json` | Ancien | Challenges seuls (fallback) |
+| **3** | `data/level1.json` | Legacy | Fallback final |
+
+### Enrichissement Automatique
+
+Si `level-complete.json` contient un `narrativeTree`, le système :
+1. ✅ Charge les challenges positionnés
+2. ✅ Trouve chaque nœud correspondant dans l'arbre narratif
+3. ✅ Enrichit automatiquement avec :
+   - Nom du challenge
+   - Icône et couleur
+   - Dialogue de prévisualisation
+   - Carte récompense
+4. ✅ Place les challenges enrichis sur la carte
+
+### Code d'Enrichissement
+
+Le code suivant (dans `main.js:10-43`) gère l'enrichissement :
+
+```javascript
+function enrichChallengesWithNarrative(challenges, narrativeTree) {
+    return challenges.map(challenge => {
+        const node = narrativeTree.nodes.find(n => n.id === challenge.id);
+        return {
+            ...challenge,
+            name: node.name,
+            icon: node.icon,
+            color: node.color,
+            description: node.dialogue,
+            rewardCard: node.rewardCard
+        };
+    });
+}
+```
+
+**Vous n'avez rien à faire**, c'est automatique ! 🎉
+
+---
+
+## 4. Vérification
+
+### Checklist de Validation
+
+#### Avant le Chargement
+- [ ] Le fichier `level-complete.json` existe dans `data/`
+- [ ] Le nom est exact (tiret, pas underscore)
+- [ ] Le JSON est valide (testez avec `jq` ou jsonlint.com)
+- [ ] L'image de carte existe dans `assets/`
+
+#### Vérifications Console (F12)
+
+Ouvrez la console et vérifiez ces messages :
+
+**✅ Chargement Réussi**
+```javascript
+Fichiers chargés: {
+  levelComplete: "✅",  ← Doit être ✅
+  challenges: "✅",
+  level1: "✅"
+}
+📦 Utilisation de level-complete.json (format complet avec arbre narratif)
+🗺️ Carte chargée: assets/level1.png
+🔄 Enrichissement de 2 challenges avec l'arbre narratif
+✅ Challenge enrichi: Le Gobelin (node_0)
+✅ Challenge enrichi: Le Gardien (node_1)
+🌳 2 challenges enrichis avec l'arbre narratif
+✅ 2 challenges chargés depuis level-complete.json
+📍 Source: level-complete.json
+✅ Jeu démarré avec succès!
+```
+
+**❌ Fichier Non Trouvé**
+```javascript
+Fichiers chargés: {
+  levelComplete: "❌",  ← Fichier absent
+  challenges: "✅",
+  level1: "✅"
+}
+📦 Utilisation de challenges.json (ancien format)
+```
+
+→ **Action** : Vérifiez que `data/level-complete.json` existe
+
+---
+
+### Commandes de Test
+
+```bash
+# Vérifier que le fichier existe
+test -f data/level-complete.json && echo "✅ Fichier existe" || echo "❌ Fichier absent"
+
+# Valider le JSON
+cat data/level-complete.json | jq . > /dev/null && echo "✅ JSON valide" || echo "❌ JSON invalide"
+
+# Vérifier la structure
+cat data/level-complete.json | jq 'has("mapFile", "gridSize", "startPos", "challenges", "narrativeTree")'
+
+# Doit afficher: true
+
+# Compter les challenges
+echo "Challenges: $(cat data/level-complete.json | jq '.challenges | length')"
+echo "Nœuds: $(cat data/level-complete.json | jq '.narrativeTree.nodes | length')"
+
+# Ces deux nombres doivent correspondre !
+```
+
+---
+
+## 5. Débogage
+
+### Problème 1 : Le fichier ne se charge pas
+
+**Symptôme** :
+```
+Fichiers chargés: { levelComplete: "❌" }
+```
+
+**Causes possibles** :
+1. Le fichier n'existe pas dans `data/`
+2. Le nom du fichier est incorrect
+3. Les permissions sont incorrectes
+
+**Solutions** :
+```bash
+# 1. Vérifiez l'emplacement
+ls -la data/level-complete.json
+
+# 2. Vérifiez les permissions
+chmod 644 data/level-complete.json
+
+# 3. Vérifiez que vous êtes au bon endroit
+pwd
+# Doit afficher: /home/user/last_dunes_v2
+```
+
+---
+
+### Problème 2 : JSON invalide
+
+**Symptôme** :
+```
+❌ Erreur lors du chargement: SyntaxError: Unexpected token
+```
+
+**Solutions** :
+```bash
+# Validez avec jq
+cat data/level-complete.json | jq .
+
+# Si erreur, corrigez ou réexportez depuis niveau-editor.html
+
+# Ou utilisez jsonlint.com
+```
+
+---
+
+### Problème 3 : Les challenges ne s'enrichissent pas
+
+**Symptôme** :
+```
+⚠️ Pas d'arbre narratif fourni, utilisation des challenges bruts
+```
+
+**Cause** : La propriété `narrativeTree` est absente ou vide
+
+**Solution** :
+1. Vérifiez que vous avez exporté depuis **niveau-editor.html** (pas challenge-editor)
+2. Vérifiez que vous avez importé l'arbre narratif dans niveau-editor **avant** d'exporter
+3. Ouvrez le JSON et vérifiez :
+```bash
+cat data/level-complete.json | jq '.narrativeTree'
+# Ne doit pas afficher "null"
+```
+
+---
+
+### Problème 4 : Erreur CORS
+
+**Symptôme** :
+```
+Access to fetch at 'file://...' has been blocked by CORS policy
+```
+
+**Cause** : Vous avez ouvert le HTML directement (`file://`)
+
+**Solution** : **TOUJOURS** utiliser un serveur web local
+```bash
+python3 -m http.server 8000
+# Puis ouvrez http://localhost:8000
+```
+
+---
+
+### Problème 5 : Les challenges ne s'affichent pas
+
+**Causes possibles** :
+1. Les coordonnées sont hors de la grille
+2. Le `triggerRadius` est trop petit
+3. Les IDs ne correspondent pas entre challenges et nœuds
+
+**Solutions** :
+```bash
+# Vérifiez les coordonnées
+cat data/level-complete.json | jq '.challenges[] | {id, coordinates}'
+
+# Vérifiez les IDs
+cat data/level-complete.json | jq '.challenges[].id' | sort > /tmp/challenges_ids.txt
+cat data/level-complete.json | jq '.narrativeTree.nodes[].id' | sort > /tmp/nodes_ids.txt
+diff /tmp/challenges_ids.txt /tmp/nodes_ids.txt
+# Si différent, il y a un problème de correspondance
+```
+
+---
+
+## 6. Multi-Niveaux
+
+### Organisation pour Plusieurs Niveaux
+
+Si vous voulez plusieurs niveaux :
+
+```
+data/
+├── level1-complete.json
+├── level2-complete.json
+├── level3-complete.json
+└── level1.json          (mécaniques communes)
+```
+
+### Méthode 1 : Changement Manuel
+
+Copiez le niveau à jouer :
+```bash
+cp data/level2-complete.json data/level-complete.json
+```
+
+---
+
+### Méthode 2 : Sélection par URL
+
+Modifiez `js/main.js` pour accepter un paramètre :
+
+```javascript
+// Récupérer le niveau depuis l'URL
+const params = new URLSearchParams(window.location.search);
+const levelNumber = params.get('level') || '1';
+const levelFile = `data/level${levelNumber}-complete.json`;
+
+// Charger le niveau spécifique
+fetch(levelFile)
+    .then(r => r.ok ? r.json() : null)
+    .catch(() => null)
+```
+
+**Usage** :
+```
+http://localhost:8000?level=1  → Charge level1-complete.json
+http://localhost:8000?level=2  → Charge level2-complete.json
+http://localhost:8000?level=3  → Charge level3-complete.json
+```
+
+---
+
+### Méthode 3 : Menu de Sélection
+
+Créez `menu.html` :
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Last Dunes - Sélection de Niveau</title>
+</head>
+<body>
+    <h1>Choisissez votre Niveau</h1>
+    <button onclick="location.href='index.html?level=1'">
+        Niveau 1 - Le Désert
+    </button>
+    <button onclick="location.href='index.html?level=2'">
+        Niveau 2 - Les Catacombes
+    </button>
+    <button onclick="location.href='index.html?level=3'">
+        Niveau 3 - Le Boss Final
+    </button>
+</body>
+</html>
+```
+
+---
+
+## 7. Structure du Fichier
+
+### Format Complet
 
 ```json
 {
@@ -92,8 +460,7 @@ Ce guide explique comment intégrer le fichier `level-complete.json` exporté de
     "y": 25
   },
   "walls": [
-    {"x": 10, "y": 5},
-    {"x": 11, "y": 5}
+    {"x": 10, "y": 5}
   ],
   "water": [
     {"x": 8, "y": 12}
@@ -108,15 +475,12 @@ Ce guide explique comment intégrer le fichier `level-complete.json` exporté de
   ],
   "challenges": [
     {
-      "id": "node_1",
-      "coordinates": {
-        "x": 14,
-        "y": 18
-      },
+      "id": "node_0",
+      "coordinates": {"x": 14, "y": 18},
       "triggerRadius": 1,
       "outcomes": {
         "success_triumph": {
-          "text": "Vous triomphez brillamment !",
+          "text": "Vous triomphez !",
           "cost": 2,
           "type": "success",
           "healthChange": 0
@@ -145,49 +509,24 @@ Ce guide explique comment intégrer le fichier `level-complete.json` exporté de
   "narrativeTree": {
     "nodes": [
       {
-        "id": "node_1",
+        "id": "node_0",
         "name": "Le Gobelin",
         "type": "challenge",
         "icon": "👺",
         "color": "#00ff00",
-        "dialogue": "Un gobelin vicieux bloque votre chemin.",
+        "dialogue": "Un gobelin bloque votre chemin.",
         "isStart": true,
         "x": 50,
         "y": 50,
-        "outcomes": {
-          "success_triumph": {
-            "text": "Vous triomphez brillamment !",
-            "cost": 2,
-            "type": "success",
-            "healthChange": 0
-          },
-          "success_narrow": {
-            "text": "Vous réussissez de justesse.",
-            "cost": 1,
-            "type": "success",
-            "healthChange": 0
-          },
-          "fail_narrow": {
-            "text": "Vous échouez mais survivez.",
-            "cost": 0,
-            "type": "fail",
-            "healthChange": -1
-          },
-          "fail_catastrophic": {
-            "text": "Échec catastrophique !",
-            "cost": 0,
-            "type": "fail",
-            "healthChange": -2
-          }
-        },
+        "outcomes": {...},
         "rewardCard": {
-          "name": "épée_du_gobelin",
+          "name": "épée_gobelin",
           "label": "Épée du Gobelin",
-          "description": "Une épée rouillée mais tranchante",
+          "description": "Une épée rouillée",
           "icon": "⚔️",
           "cost": 1,
           "outcomeType": "success",
-          "outcomeText": "Vous frappez avec l'épée du gobelin !",
+          "outcomeText": "Vous frappez !",
           "healthChange": 0,
           "uses": 3
         }
@@ -195,639 +534,49 @@ Ce guide explique comment intégrer le fichier `level-complete.json` exporté de
     ],
     "connections": [
       {
-        "from": "node_1",
+        "from": "node_0",
         "fromOutcome": "success_triumph",
-        "to": "node_2"
+        "to": "node_1"
       }
     ]
   }
 }
 ```
 
-### Sections Principales
+---
 
-| Section | Description |
-|---------|-------------|
-| `mapFile` | Chemin vers l'image de la carte |
-| `gridSize` | Taille des cellules de la grille |
-| `startPos` | Position de départ du joueur (x, y) |
-| `walls` | Tableau des murs (obstacles) |
-| `water` | Tableau des zones d'eau |
-| `objects` | Tableau des objets décoratifs |
-| `challenges` | Challenges positionnés avec coordonnées et outcomes |
-| `narrativeTree` | Arbre narratif complet avec nœuds et connexions |
+## 8. Résumé
+
+### Ce Qui Est Automatique ✅
+
+- **Chargement** : `level-complete.json` est chargé automatiquement s'il existe
+- **Enrichissement** : Les challenges sont enrichis avec l'arbre narratif
+- **Fallback** : Si absent, le jeu charge `challenges.json` ou `level1.json`
+- **Logs** : Tout est tracé dans la console pour le débogage
+
+### Ce Que Vous Devez Faire ✅
+
+1. **Créer** votre arbre narratif dans `challenge-editor.html`
+2. **Placer** vos challenges dans `niveau-editor.html`
+3. **Copier** `level-complete.json` dans `data/`
+4. **Tester** avec un serveur web local
+
+### Points Clés 🎯
+
+- ✅ Le fichier **doit** s'appeler `level-complete.json` (avec tiret)
+- ✅ Le fichier **doit** être dans `data/`
+- ✅ Vous **devez** utiliser un serveur web (pas `file://`)
+- ✅ La console (F12) est votre amie pour le débogage
 
 ---
 
-## 3. Organisation des Fichiers
+## 🔗 Ressources
 
-### Structure Recommandée
-
-```
-last_dunes_v2/
-├── index.html
-├── challenge-editor.html
-├── niveau-editor.html
-├── js/
-│   ├── main.js
-│   ├── mapEngine.js
-│   ├── gameLogic.js
-│   └── uiManager.js
-├── data/
-│   ├── level-complete.json      ← Placez votre fichier exporté ici
-│   ├── level1-complete.json     ← Alternative: nommez par niveau
-│   ├── level2-complete.json
-│   └── level3-complete.json
-├── assets/
-│   ├── level1.png
-│   ├── level2.png
-│   └── ...
-└── documentation/
-    ├── INTEGRATION_GUIDE.md
-    ├── STRUCTURE_INTEGRATION.md
-    └── ...
-```
-
-### Convention de Nommage
-
-**Option 1 : Un seul niveau actif**
-```
-data/level-complete.json
-```
-
-**Option 2 : Multi-niveaux**
-```
-data/level1-complete.json
-data/level2-complete.json
-data/level3-complete.json
-```
-
-**Option 3 : Par thème**
-```
-data/desert-level.json
-data/cave-level.json
-data/boss-level.json
-```
+- **README principal** : Vue d'ensemble du projet
+- **DEBOGAGE_RAPIDE.md** : Solutions aux problèmes courants
+- **SELECTION_CHALLENGE_GUIDE.md** : Guide de l'éditeur de challenges
+- **NOUVELLES_FONCTIONNALITES.md** : Système de PV et récompenses
 
 ---
 
-## 4. Intégration dans le Jeu
-
-### Méthode 1 : Remplacer challenges.json (Simple)
-
-Cette méthode est la plus simple si vous avez un seul niveau.
-
-**Étapes** :
-1. Placez `level-complete.json` dans le dossier `data/`
-2. Renommez-le en `challenges.json` (remplace l'ancien)
-3. Aucune modification de code nécessaire
-
-**Avantage** : Aucun changement de code
-**Inconvénient** : Un seul niveau à la fois
-
----
-
-### Méthode 2 : Charger level-complete.json (Recommandé)
-
-Modifiez `js/main.js` pour charger le nouveau fichier.
-
-**Fichier** : `js/main.js`
-
-**Avant** :
-```javascript
-Promise.all([
-    fetch('data/challenges.json').then(r => r.ok ? r.json() : null),
-    fetch('data/level1.json').then(r => r.json())
-])
-```
-
-**Après** :
-```javascript
-Promise.all([
-    fetch('data/level-complete.json').then(r => r.ok ? r.json() : null),
-    fetch('data/level1.json').then(r => r.json())
-])
-```
-
----
-
-### Méthode 3 : Système Multi-Niveaux (Avancé)
-
-Pour charger différents niveaux dynamiquement.
-
-**Fichier** : `js/main.js`
-
-```javascript
-// Récupérer le niveau à charger depuis l'URL ou une variable
-const currentLevel = new URLSearchParams(window.location.search).get('level') || '1';
-const levelFile = `data/level${currentLevel}-complete.json`;
-
-Promise.all([
-    fetch(levelFile).then(r => r.ok ? r.json() : null),
-    fetch('data/level1.json').then(r => r.json())
-])
-.then(([levelData, gameData]) => {
-    console.log(`✅ Niveau ${currentLevel} chargé:`, levelData);
-
-    if (levelData) {
-        // Charger le niveau complet
-        loadCompleteLevel(levelData, gameData);
-    } else {
-        throw new Error(`Impossible de charger le niveau ${currentLevel}`);
-    }
-})
-.catch(error => {
-    console.error("Erreur lors du chargement:", error);
-    alert("Erreur: " + error.message);
-});
-
-function loadCompleteLevel(levelData, gameData) {
-    // Configuration du niveau
-    const levelInfo = {
-        name: "Niveau Personnalisé",
-        mapFile: levelData.mapFile,
-        gridSize: levelData.gridSize,
-        startPos: levelData.startPos
-    };
-
-    // Charger la carte
-    engine.loadMap(levelInfo);
-
-    // Charger le terrain
-    engine.loadTerrain(levelData.walls, levelData.water, levelData.objects);
-
-    // Enrichir les challenges avec les données narratives
-    const enrichedChallenges = enrichChallengesWithNarrative(
-        levelData.challenges,
-        levelData.narrativeTree
-    );
-
-    // Placer les challenges
-    engine.placeInteractables(enrichedChallenges);
-
-    console.log(`✅ ${enrichedChallenges.length} challenges chargés`);
-
-    // Initialiser la logique de jeu
-    logic.init(gameData);
-    ui.init(gameData.mechanics.cards);
-
-    // Démarrer le jeu
-    engine.onPlayerMove((pos) => {
-        const challenge = engine.checkCollision(pos);
-        if (challenge && !challenge.visited) {
-            challenge.visited = true;
-            ui.triggerChallenge(challenge, logic);
-        }
-    });
-
-    engine.start();
-    console.log("✅ Jeu démarré avec succès!");
-}
-```
-
----
-
-## 5. Code d'Exemple
-
-### Fonction d'Enrichissement des Challenges
-
-Cette fonction combine les challenges positionnés avec leurs données narratives complètes.
-
-```javascript
-/**
- * Enrichit les challenges avec les données de l'arbre narratif
- * @param {Array} challenges - Challenges avec coordonnées
- * @param {Object} narrativeTree - Arbre narratif complet
- * @returns {Array} Challenges enrichis
- */
-function enrichChallengesWithNarrative(challenges, narrativeTree) {
-    if (!narrativeTree || !narrativeTree.nodes) {
-        console.warn("⚠️ Pas d'arbre narratif fourni");
-        return challenges;
-    }
-
-    return challenges.map(challenge => {
-        // Trouver le nœud narratif correspondant
-        const node = narrativeTree.nodes.find(n => n.id === challenge.id);
-
-        if (!node) {
-            console.warn(`⚠️ Nœud narratif non trouvé pour ${challenge.id}`);
-            return challenge;
-        }
-
-        // Enrichir le challenge avec les données narratives
-        return {
-            ...challenge,
-            name: node.name,
-            type: node.type,
-            icon: node.icon,
-            color: node.color,
-            description: node.dialogue,
-            dialogue_preview: node.dialogue,
-            isStart: node.isStart || false,
-            rewardCard: node.rewardCard || null,
-            // Fusionner les outcomes
-            outcomes: {
-                success_triumph: challenge.outcomes.success_triumph.text,
-                success_narrow: challenge.outcomes.success_narrow.text,
-                fail_narrow: challenge.outcomes.fail_narrow.text,
-                fail_catastrophic: challenge.outcomes.fail_catastrophic.text
-            },
-            // Ajouter les données de santé
-            healthChanges: {
-                success_triumph: challenge.outcomes.success_triumph.healthChange,
-                success_narrow: challenge.outcomes.success_narrow.healthChange,
-                fail_narrow: challenge.outcomes.fail_narrow.healthChange,
-                fail_catastrophic: challenge.outcomes.fail_catastrophic.healthChange
-            },
-            // Conserver les coûts de catastrophe
-            costs: {
-                success_triumph: challenge.outcomes.success_triumph.cost,
-                success_narrow: challenge.outcomes.success_narrow.cost,
-                fail_narrow: challenge.outcomes.fail_narrow.cost,
-                fail_catastrophic: challenge.outcomes.fail_catastrophic.cost
-            }
-        };
-    });
-}
-```
-
-### Fonction de Navigation entre Niveaux
-
-```javascript
-/**
- * Charge un niveau spécifique
- * @param {number} levelNumber - Numéro du niveau à charger
- */
-function loadLevel(levelNumber) {
-    const levelFile = `data/level${levelNumber}-complete.json`;
-
-    fetch(levelFile)
-        .then(r => {
-            if (!r.ok) throw new Error(`Niveau ${levelNumber} introuvable`);
-            return r.json();
-        })
-        .then(levelData => {
-            console.log(`✅ Chargement du niveau ${levelNumber}`);
-            // Réinitialiser le jeu
-            engine.reset();
-            logic.reset();
-            // Charger le nouveau niveau
-            loadCompleteLevel(levelData);
-        })
-        .catch(error => {
-            console.error(`❌ Erreur niveau ${levelNumber}:`, error);
-            alert(`Impossible de charger le niveau ${levelNumber}`);
-        });
-}
-
-// Utilisation
-// Dans votre HTML ou après la fin d'un niveau
-document.getElementById('btn-next-level').addEventListener('click', () => {
-    const nextLevel = parseInt(currentLevel) + 1;
-    loadLevel(nextLevel);
-});
-```
-
----
-
-## 6. Méthodes d'Intégration
-
-### Comparaison des Méthodes
-
-| Méthode | Difficulté | Flexibilité | Usage Recommandé |
-|---------|-----------|-------------|------------------|
-| **Remplacer challenges.json** | ⭐ Facile | ⭐ Limitée | Prototype, un seul niveau |
-| **Charger level-complete.json** | ⭐⭐ Moyenne | ⭐⭐ Bonne | Production, niveau unique |
-| **Système multi-niveaux** | ⭐⭐⭐ Avancée | ⭐⭐⭐ Excellente | Jeu complet, plusieurs niveaux |
-
----
-
-## 7. Gestion Multi-Niveaux
-
-### Structure URL pour Sélection de Niveau
-
-```
-index.html?level=1  → Charge level1-complete.json
-index.html?level=2  → Charge level2-complete.json
-index.html?level=3  → Charge level3-complete.json
-```
-
-### Menu de Sélection de Niveau (Exemple HTML)
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Last Dunes - Sélection de Niveau</title>
-</head>
-<body>
-    <h1>Sélectionnez un Niveau</h1>
-    <div class="level-selector">
-        <button onclick="window.location.href='game.html?level=1'">
-            Niveau 1 - Le Désert
-        </button>
-        <button onclick="window.location.href='game.html?level=2'">
-            Niveau 2 - Les Catacombes
-        </button>
-        <button onclick="window.location.href='game.html?level=3'">
-            Niveau 3 - Le Boss Final
-        </button>
-    </div>
-</body>
-</html>
-```
-
-### Configuration de Niveaux (Fichier JSON)
-
-Créez `data/levels-config.json` :
-
-```json
-{
-  "levels": [
-    {
-      "id": 1,
-      "name": "Le Désert Maudit",
-      "file": "level1-complete.json",
-      "difficulty": "Facile",
-      "unlocked": true
-    },
-    {
-      "id": 2,
-      "name": "Les Catacombes",
-      "file": "level2-complete.json",
-      "difficulty": "Moyen",
-      "unlocked": false
-    },
-    {
-      "id": 3,
-      "name": "Le Nécromancien",
-      "file": "level3-complete.json",
-      "difficulty": "Difficile",
-      "unlocked": false
-    }
-  ]
-}
-```
-
-Chargez cette configuration :
-
-```javascript
-fetch('data/levels-config.json')
-    .then(r => r.json())
-    .then(config => {
-        const currentLevelConfig = config.levels.find(l => l.id === currentLevel);
-        fetch(`data/${currentLevelConfig.file}`)
-            .then(r => r.json())
-            .then(levelData => loadCompleteLevel(levelData));
-    });
-```
-
----
-
-## 8. Débogage
-
-### Vérifications Essentielles
-
-#### 1. Vérifier le Fichier Exporté
-
-```bash
-# Vérifiez que le fichier existe
-ls -la data/level-complete.json
-
-# Vérifiez la validité du JSON
-cat data/level-complete.json | jq .
-```
-
-#### 2. Console du Navigateur
-
-Ouvrez la console (F12) et vérifiez :
-
-```javascript
-// Le fichier est-il chargé ?
-console.log("Level data:", levelData);
-
-// Les challenges sont-ils présents ?
-console.log("Challenges:", levelData.challenges);
-
-// L'arbre narratif est-il présent ?
-console.log("Narrative tree:", levelData.narrativeTree);
-```
-
-#### 3. Erreurs Courantes
-
-| Erreur | Cause | Solution |
-|--------|-------|----------|
-| `404 Not Found` | Fichier mal placé | Vérifiez le chemin `data/level-complete.json` |
-| `Unexpected token` | JSON invalide | Validez avec jsonlint.com |
-| `challenges is undefined` | Structure incorrecte | Vérifiez la propriété `challenges` existe |
-| `CORS error` | Ouvert en file:// | Utilisez un serveur web local |
-
-#### 4. Serveur Web Local
-
-Pour tester localement sans erreurs CORS :
-
-```bash
-# Méthode 1 : Python 3
-python3 -m http.server 8000
-
-# Méthode 2 : PHP
-php -S localhost:8000
-
-# Méthode 3 : Node.js (avec http-server)
-npx http-server -p 8000
-
-# Puis ouvrez : http://localhost:8000
-```
-
-#### 5. Validation de la Structure
-
-```javascript
-function validateLevelData(data) {
-    const required = ['mapFile', 'gridSize', 'startPos', 'challenges', 'narrativeTree'];
-    const missing = required.filter(key => !data[key]);
-
-    if (missing.length > 0) {
-        console.error(`❌ Propriétés manquantes: ${missing.join(', ')}`);
-        return false;
-    }
-
-    if (!data.challenges || data.challenges.length === 0) {
-        console.warn('⚠️ Aucun challenge défini');
-    }
-
-    if (!data.narrativeTree.nodes || data.narrativeTree.nodes.length === 0) {
-        console.warn('⚠️ Arbre narratif vide');
-    }
-
-    console.log('✅ Structure valide');
-    return true;
-}
-
-// Utilisation
-fetch('data/level-complete.json')
-    .then(r => r.json())
-    .then(data => {
-        if (validateLevelData(data)) {
-            loadCompleteLevel(data);
-        }
-    });
-```
-
----
-
-## 9. Checklist d'Intégration
-
-### Avant de Commencer
-- [ ] J'ai créé mon arbre narratif dans `challenge-editor.html`
-- [ ] J'ai exporté `narrative-tree.json`
-- [ ] J'ai importé l'arbre dans `niveau-editor.html`
-- [ ] J'ai placé tous les challenges sur la carte
-- [ ] J'ai exporté `level-complete.json`
-
-### Placement des Fichiers
-- [ ] J'ai créé le dossier `data/` s'il n'existe pas
-- [ ] J'ai placé `level-complete.json` dans `data/`
-- [ ] L'image de la carte est dans `assets/`
-- [ ] Le chemin `mapFile` dans le JSON correspond au fichier image
-
-### Modification du Code
-- [ ] J'ai modifié `js/main.js` pour charger le bon fichier
-- [ ] J'ai ajouté la fonction `enrichChallengesWithNarrative` si nécessaire
-- [ ] J'ai testé que le fichier se charge sans erreur
-
-### Test du Jeu
-- [ ] J'ai lancé un serveur web local
-- [ ] Le jeu démarre sans erreur dans la console
-- [ ] La carte s'affiche correctement
-- [ ] Les challenges sont positionnés correctement
-- [ ] Les dialogues s'affichent correctement
-- [ ] Les outcomes fonctionnent
-- [ ] Les points de vie changent correctement
-- [ ] Les cartes récompenses apparaissent
-
----
-
-## 10. Résumé Visuel
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     WORKFLOW COMPLET                        │
-└─────────────────────────────────────────────────────────────┘
-
-1. CRÉATION
-   challenge-editor.html
-   └─→ Export: narrative-tree.json
-
-2. PLACEMENT
-   niveau-editor.html
-   ├─→ Import: narrative-tree.json
-   └─→ Export: level-complete.json
-
-3. INTÉGRATION
-   level-complete.json
-   └─→ Placer dans: data/
-
-4. CHARGEMENT
-   js/main.js
-   ├─→ fetch('data/level-complete.json')
-   └─→ loadCompleteLevel()
-
-5. JEU
-   index.html
-   └─→ Le niveau se charge avec tous les challenges
-```
-
----
-
-## 11. Exemples Complets
-
-### Exemple 1 : Intégration Simple (Un Niveau)
-
-**Étape 1** : Placez le fichier
-```bash
-cp level-complete.json data/
-```
-
-**Étape 2** : Modifiez `js/main.js`
-```javascript
-// Ligne 9 : Changez le nom du fichier
-fetch('data/level-complete.json').then(r => r.ok ? r.json() : null),
-```
-
-**Étape 3** : Testez
-```bash
-python3 -m http.server 8000
-# Ouvrez http://localhost:8000
-```
-
----
-
-### Exemple 2 : Trois Niveaux
-
-**Étape 1** : Créez vos niveaux
-- Niveau 1 → `data/level1-complete.json`
-- Niveau 2 → `data/level2-complete.json`
-- Niveau 3 → `data/level3-complete.json`
-
-**Étape 2** : Créez `js/level-loader.js`
-```javascript
-class LevelLoader {
-    constructor() {
-        this.currentLevel = 1;
-    }
-
-    async loadLevel(levelNumber) {
-        try {
-            const response = await fetch(`data/level${levelNumber}-complete.json`);
-            if (!response.ok) throw new Error(`Niveau ${levelNumber} introuvable`);
-
-            const levelData = await response.json();
-            console.log(`✅ Niveau ${levelNumber} chargé`);
-
-            this.currentLevel = levelNumber;
-            return levelData;
-        } catch (error) {
-            console.error(`❌ Erreur chargement niveau ${levelNumber}:`, error);
-            throw error;
-        }
-    }
-
-    nextLevel() {
-        return this.loadLevel(this.currentLevel + 1);
-    }
-
-    restart() {
-        return this.loadLevel(this.currentLevel);
-    }
-}
-
-// Utilisation
-const levelLoader = new LevelLoader();
-levelLoader.loadLevel(1).then(data => loadCompleteLevel(data));
-```
-
-**Étape 3** : Ajoutez dans `index.html`
-```html
-<script src="js/level-loader.js"></script>
-```
-
----
-
-## Conclusion
-
-Vous avez maintenant toutes les informations pour intégrer votre fichier `level-complete.json` dans le jeu. Le fichier contient à la fois la carte, les challenges positionnés, et l'arbre narratif complet.
-
-**Points Clés** :
-- ✅ Placez le fichier dans `data/`
-- ✅ Modifiez `js/main.js` pour le charger
-- ✅ Utilisez un serveur web local pour tester
-- ✅ Validez la structure avec la console
-
-**Prochaines Étapes** :
-1. Testez avec un niveau simple
-2. Ajoutez plus de challenges
-3. Créez plusieurs niveaux
-4. Implémentez la navigation entre niveaux
-
-Bon courage pour votre intégration ! 🎮
+**Bon développement ! 🎮🏜️**
