@@ -7,6 +7,7 @@
   },
   "mechanics": {
     "catastropheMax": 3,
+    "healthMax": 3,
     "cards": {
       "success_narrow": {"label": "Réussite de justesse", "catastropheCost": 1, "outcomeType": "success"},
       "success_triumph": {"label": "Réussite triomphale", "catastropheCost": 2, "outcomeType": "success"},
@@ -27,6 +28,12 @@
         "success_triumph": "Vous pulvérisez son crâne d'un coup magistral. Le bruit résonne. (+2 Catastrophe)",
         "fail_narrow": "Il vous égratigne le bras. Vous passez en force mais blessé.",
         "fail_catastrophic": "Vous trébuchez. Il sonne l'alarme avant de vous frapper."
+      },
+      "healthEffects": {
+        "success_triumph": 0,
+        "success_narrow": 0,
+        "fail_narrow": -1,
+        "fail_catastrophic": -2
       }
     },
     {
@@ -41,6 +48,12 @@
         "success_triumph": "Votre magie purifie tout le puits, mais l'éclair de lumière est visible de loin. (+2 Catastrophe)",
         "fail_narrow": "Vous ne buvez rien et restez assoiffé.",
         "fail_catastrophic": "Vous tombez dedans en essayant de puiser l'eau."
+      },
+      "healthEffects": {
+        "success_triumph": 1,
+        "success_narrow": 1,
+        "fail_narrow": 0,
+        "fail_catastrophic": -2
       }
     },
     {
@@ -55,6 +68,12 @@
         "success_triumph": "Vous tuez le nécromancien et récupérez son grimoire.",
         "fail_narrow": "Le rituel est complété, mais vous survivez à l'explosion.",
         "fail_catastrophic": "Le nécromancien vous transforme en l'un de ses sbires. Fin de partie."
+      },
+      "healthEffects": {
+        "success_triumph": 0,
+        "success_narrow": 0,
+        "fail_narrow": -1,
+        "fail_catastrophic": -3
       }
     }
   ]

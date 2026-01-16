@@ -349,13 +349,62 @@
                     <label>Couleur:</label>
                     <input type="color" id="new-color" value="#ff00ff">
 
+                    <label>🖼️ Image du challenge (optionnel):</label>
+                    <input type="file" id="challenge-image-upload" accept="image/png,image/jpg,image/jpeg,image/gif,image/webp">
+                    <div id="challenge-image-preview" style="margin: 10px 0; display: none;">
+                        <img id="preview-img" style="max-width: 200px; max-height: 150px; border: 2px solid #ffd700; border-radius: 8px; display: block;">
+                        <button onclick="clearChallengeImage()" style="margin-top: 5px; background: #f44336; font-size: 12px;">❌ Supprimer l'image</button>
+                    </div>
+                    <small style="color: #aaa; display: block; margin-bottom: 10px;">
+                        Importez une illustration pour ce challenge. L'image sera encodée dans le fichier JSON.
+                    </small>
+
                     <label>Rayon de déclenchement:</label>
                     <input type="number" id="new-radius" value="1" min="0" max="5">
 
                     <label>Dialogue de prévisualisation:</label>
                     <textarea id="new-dialogue" rows="2" placeholder="Ses orbites vides vous fixent..."></textarea>
 
+                    <label>📝 Conséquences des choix de cartes:</label>
+                    <div style="background: #444; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <label style="font-size: 12px; color: #4CAF50;">✨ Réussite triomphale:</label>
+                        <textarea id="outcome-success-triumph" rows="2" placeholder="Exemple: Vous pulvérisez le gobelin et trouvez une clé secrète sur son cadavre." style="margin-bottom: 10px;">Vous triomphez brillamment.</textarea>
+
+                        <label style="font-size: 12px; color: #8BC34A;">✓ Réussite de justesse:</label>
+                        <textarea id="outcome-success-narrow" rows="2" placeholder="Exemple: Vous assommez le gobelin après un combat difficile." style="margin-bottom: 10px;">Vous réussissez de justesse.</textarea>
+
+                        <label style="font-size: 12px; color: #FF9800;">⚠️ Échec de justesse:</label>
+                        <textarea id="outcome-fail-narrow" rows="2" placeholder="Exemple: Le gobelin vous blesse, vous perdez 1 point de vie." style="margin-bottom: 10px;">Vous échouez mais survivez.</textarea>
+
+                        <label style="font-size: 12px; color: #F44336;">💀 Échec catastrophique:</label>
+                        <textarea id="outcome-fail-catastrophic" rows="2" placeholder="Exemple: Le gobelin vous frappe violemment, vous perdez 2 points de vie.">Échec catastrophique.</textarea>
+
+                        <small style="color: #aaa; display: block; margin-top: 8px;">
+                            Décrivez ce qui arrive au joueur selon le type de carte choisie.
+                        </small>
+                    </div>
+
+                    <label>❤️ Effets sur les points de vie:</label>
+                    <div style="background: #444; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <label style="font-size: 12px;">Réussite triomphale (HP):</label>
+                        <input type="number" id="hp-success-triumph" value="0" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Réussite de justesse (HP):</label>
+                        <input type="number" id="hp-success-narrow" value="0" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Échec de justesse (HP):</label>
+                        <input type="number" id="hp-fail-narrow" value="-1" min="-10" max="10" style="width: 80px;">
+
+                        <label style="font-size: 12px; margin-top: 5px;">Échec catastrophique (HP):</label>
+                        <input type="number" id="hp-fail-catastrophic" value="-2" min="-10" max="10" style="width: 80px;">
+
+                        <small style="color: #aaa; display: block; margin-top: 8px;">
+                            Positif = gain de HP, Négatif = perte de HP
+                        </small>
+                    </div>
+
                     <button onclick="addChallengeMode()">➕ Placer au prochain clic</button>
+                    <button onclick="saveEditedChallenge()" style="background: #2196F3; display:none;" id="save-edit-btn">💾 Sauvegarder les modifications</button>
                 </div>
 
                 <div class="tool-section">
@@ -384,6 +433,12 @@
                     <label>Position de départ (X, Y):</label>
                     <input type="number" id="start-x" value="16" min="0" max="19" style="width:48%; display:inline-block">
                     <input type="number" id="start-y" value="25" min="0" max="19" style="width:48%; display:inline-block">
+
+                    <label>❤️ Points de vie maximum:</label>
+                    <input type="number" id="max-health" value="3" min="1" max="10">
+                    <small style="color: #aaa; display: block; margin-top: 5px;">
+                        Nombre initial de points de vie du joueur (défaut: 3)
+                    </small>
                 </div>
 
                 <div class="tool-section">
@@ -421,12 +476,39 @@
         let waitingForChallenge = false;
         let isDrawing = false;
         let brushMode = false;
+        let editingChallengeId = null;
+        let currentChallengeImage = null; // Stores base64 encoded image
 
         // Active tab
         let activeTab = 'terrain';
 
         // Initialize
         render();
+
+        // Image upload handler
+        document.getElementById('challenge-image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file size (limit to 500KB to keep JSON reasonable)
+            if (file.size > 500000) {
+                alert('⚠️ L\'image est trop grande (max 500 KB). Veuillez utiliser une image plus petite.');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentChallengeImage = event.target.result;
+
+                // Show preview
+                const previewDiv = document.getElementById('challenge-image-preview');
+                const previewImg = document.getElementById('preview-img');
+                previewImg.src = currentChallengeImage;
+                previewDiv.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
 
         // Mouse events
         canvas.addEventListener('mousemove', (e) => {
@@ -529,8 +611,7 @@
         }
 
         function placeChallenge(x, y) {
-            const challenge = {
-                id: `challenge_${Date.now()}`,
+            const challengeData = {
                 name: document.getElementById('new-name').value || 'Nouveau Challenge',
                 type: document.getElementById('new-type').value,
                 coordinates: {x, y},
@@ -540,14 +621,47 @@
                 description: '',
                 dialogue_preview: document.getElementById('new-dialogue').value || 'Un challenge apparaît...',
                 outcomes: {
-                    success_narrow: 'Vous réussissez de justesse.',
-                    success_triumph: 'Vous triomphez brillamment.',
-                    fail_narrow: 'Vous échouez mais survivez.',
-                    fail_catastrophic: 'Échec catastrophique.'
+                    success_narrow: document.getElementById('outcome-success-narrow').value || 'Vous réussissez de justesse.',
+                    success_triumph: document.getElementById('outcome-success-triumph').value || 'Vous triomphez brillamment.',
+                    fail_narrow: document.getElementById('outcome-fail-narrow').value || 'Vous échouez mais survivez.',
+                    fail_catastrophic: document.getElementById('outcome-fail-catastrophic').value || 'Échec catastrophique.'
+                },
+                healthEffects: {
+                    success_triumph: parseInt(document.getElementById('hp-success-triumph').value) || 0,
+                    success_narrow: parseInt(document.getElementById('hp-success-narrow').value) || 0,
+                    fail_narrow: parseInt(document.getElementById('hp-fail-narrow').value) || -1,
+                    fail_catastrophic: parseInt(document.getElementById('hp-fail-catastrophic').value) || -2
                 }
             };
 
-            challenges.push(challenge);
+            // Add image if one is uploaded
+            if (currentChallengeImage) {
+                challengeData.image = currentChallengeImage;
+            }
+
+            if (editingChallengeId) {
+                // Update existing challenge
+                const index = challenges.findIndex(ch => ch.id === editingChallengeId);
+                if (index !== -1) {
+                    challenges[index] = {
+                        ...challenges[index],
+                        ...challengeData
+                    };
+                }
+                editingChallengeId = null;
+                document.getElementById('save-edit-btn').style.display = 'none';
+            } else {
+                // Create new challenge
+                const challenge = {
+                    id: `challenge_${Date.now()}`,
+                    ...challengeData
+                };
+                challenges.push(challenge);
+            }
+
+            // Clear the image after placing
+            clearChallengeImage();
+
             updateChallengesList();
             render();
         }
@@ -584,11 +698,24 @@
             document.getElementById('new-icon').value = emoji;
         }
 
+        function clearChallengeImage() {
+            currentChallengeImage = null;
+            document.getElementById('challenge-image-upload').value = '';
+            document.getElementById('challenge-image-preview').style.display = 'none';
+            document.getElementById('preview-img').src = '';
+        }
+
         function addChallengeMode() {
             waitingForChallenge = true;
             currentTool = null;
             selectedObject = null;
             canvas.style.cursor = 'cell';
+
+            // If we were editing, this becomes a "place elsewhere" action
+            if (editingChallengeId) {
+                // Keep the editing ID so the challenge will be moved on next click
+            }
+
             updateCurrentMode();
             alert('Cliquez sur le canvas pour placer le challenge');
         }
@@ -685,6 +812,108 @@
             reader.readAsDataURL(file);
         });
 
+        function editChallenge(id) {
+            const challenge = challenges.find(ch => ch.id === id);
+            if (!challenge) return;
+
+            // Load challenge data into form fields
+            document.getElementById('new-name').value = challenge.name;
+            document.getElementById('new-type').value = challenge.type;
+            document.getElementById('new-icon').value = challenge.icon;
+            document.getElementById('new-color').value = challenge.color;
+            document.getElementById('new-radius').value = challenge.triggerRadius;
+            document.getElementById('new-dialogue').value = challenge.dialogue_preview || '';
+
+            // Load outcomes
+            document.getElementById('outcome-success-triumph').value = challenge.outcomes.success_triumph || '';
+            document.getElementById('outcome-success-narrow').value = challenge.outcomes.success_narrow || '';
+            document.getElementById('outcome-fail-narrow').value = challenge.outcomes.fail_narrow || '';
+            document.getElementById('outcome-fail-catastrophic').value = challenge.outcomes.fail_catastrophic || '';
+
+            // Load health effects
+            document.getElementById('hp-success-triumph').value = challenge.healthEffects.success_triumph || 0;
+            document.getElementById('hp-success-narrow').value = challenge.healthEffects.success_narrow || 0;
+            document.getElementById('hp-fail-narrow').value = challenge.healthEffects.fail_narrow || 0;
+            document.getElementById('hp-fail-catastrophic').value = challenge.healthEffects.fail_catastrophic || 0;
+
+            // Update selected icon
+            selectedIcon = challenge.icon;
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent.includes(challenge.icon));
+            });
+
+            // Load image if exists
+            if (challenge.image) {
+                currentChallengeImage = challenge.image;
+                document.getElementById('preview-img').src = challenge.image;
+                document.getElementById('challenge-image-preview').style.display = 'block';
+            } else {
+                clearChallengeImage();
+            }
+
+            // Set editing mode
+            editingChallengeId = id;
+
+            // Show save button
+            document.getElementById('save-edit-btn').style.display = 'inline-block';
+
+            // Scroll to top of the form
+            document.getElementById('tab-challenges').scrollTop = 0;
+
+            alert('Challenge chargé pour édition. Modifiez les champs et cliquez sur "Sauvegarder les modifications".');
+        }
+
+        function saveEditedChallenge() {
+            if (!editingChallengeId) return;
+
+            const challenge = challenges.find(ch => ch.id === editingChallengeId);
+            if (!challenge) return;
+
+            // Update challenge data without moving it
+            challenge.name = document.getElementById('new-name').value || 'Nouveau Challenge';
+            challenge.type = document.getElementById('new-type').value;
+            challenge.icon = selectedIcon;
+            challenge.color = document.getElementById('new-color').value;
+            challenge.triggerRadius = parseInt(document.getElementById('new-radius').value);
+            challenge.dialogue_preview = document.getElementById('new-dialogue').value || 'Un challenge apparaît...';
+
+            // Update outcomes
+            challenge.outcomes = {
+                success_narrow: document.getElementById('outcome-success-narrow').value || 'Vous réussissez de justesse.',
+                success_triumph: document.getElementById('outcome-success-triumph').value || 'Vous triomphez brillamment.',
+                fail_narrow: document.getElementById('outcome-fail-narrow').value || 'Vous échouez mais survivez.',
+                fail_catastrophic: document.getElementById('outcome-fail-catastrophic').value || 'Échec catastrophique.'
+            };
+
+            // Update health effects
+            challenge.healthEffects = {
+                success_triumph: parseInt(document.getElementById('hp-success-triumph').value) || 0,
+                success_narrow: parseInt(document.getElementById('hp-success-narrow').value) || 0,
+                fail_narrow: parseInt(document.getElementById('hp-fail-narrow').value) || -1,
+                fail_catastrophic: parseInt(document.getElementById('hp-fail-catastrophic').value) || -2
+            };
+
+            // Update image
+            if (currentChallengeImage) {
+                challenge.image = currentChallengeImage;
+            } else {
+                // Remove image if it was cleared
+                delete challenge.image;
+            }
+
+            // Reset editing mode
+            editingChallengeId = null;
+            document.getElementById('save-edit-btn').style.display = 'none';
+
+            // Clear image preview
+            clearChallengeImage();
+
+            updateChallengesList();
+            render();
+
+            alert('Challenge modifié avec succès!');
+        }
+
         function deleteChallenge(id) {
             challenges = challenges.filter(ch => ch.id !== id);
             updateChallengesList();
@@ -711,6 +940,7 @@
                     <strong>${ch.icon} ${ch.name}</strong><br>
                     <span class="coords">Position: (${ch.coordinates.x}, ${ch.coordinates.y})</span><br>
                     <small>Type: ${ch.type} | Rayon: ${ch.triggerRadius}</small><br>
+                    <button onclick="editChallenge('${ch.id}')">✏️ Éditer</button>
                     <button class="delete" onclick="deleteChallenge('${ch.id}')">🗑️ Supprimer</button>
                 </div>
             `).join('');
@@ -734,13 +964,79 @@
             `).join('');
         }
 
+        function validateChallenges() {
+            const errors = [];
+            const warnings = [];
+
+            challenges.forEach((challenge, index) => {
+                const cNum = index + 1;
+
+                // Check required fields
+                if (!challenge.name || challenge.name === 'Nouveau Challenge') {
+                    warnings.push(`Challenge #${cNum}: Nom par défaut utilisé`);
+                }
+                if (!challenge.dialogue_preview) {
+                    warnings.push(`Challenge #${cNum} (${challenge.name}): Dialogue de prévisualisation manquant`);
+                }
+
+                // Check outcomes
+                const outcomes = challenge.outcomes || {};
+                if (!outcomes.success_narrow || !outcomes.success_triumph ||
+                    !outcomes.fail_narrow || !outcomes.fail_catastrophic) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): Tous les résultats (4) doivent être définis`);
+                }
+
+                // Check healthEffects (CRITICAL)
+                if (!challenge.healthEffects) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): healthEffects manquant - REQUIS pour le jeu!`);
+                } else {
+                    const he = challenge.healthEffects;
+                    if (he.success_triumph === undefined || he.success_narrow === undefined ||
+                        he.fail_narrow === undefined || he.fail_catastrophic === undefined) {
+                        errors.push(`Challenge #${cNum} (${challenge.name}): healthEffects incomplet`);
+                    }
+                }
+
+                // Check coordinates
+                if (!challenge.coordinates || challenge.coordinates.x === undefined || challenge.coordinates.y === undefined) {
+                    errors.push(`Challenge #${cNum} (${challenge.name}): Coordonnées manquantes`);
+                }
+            });
+
+            return { errors, warnings };
+        }
+
         function exportJSON() {
+            // Validate before export
+            const validation = validateChallenges();
+
+            if (validation.errors.length > 0) {
+                alert('❌ ERREURS CRITIQUES - Export annulé:\n\n' + validation.errors.join('\n') + '\n\nCorrigez ces erreurs avant d\'exporter.');
+                return;
+            }
+
+            if (validation.warnings.length > 0) {
+                if (!confirm('⚠️ AVERTISSEMENTS:\n\n' + validation.warnings.join('\n') + '\n\nContinuer quand même?')) {
+                    return;
+                }
+            }
+
             const config = {
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
                 startPos: {
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
+                },
+                mechanics: {
+                    catastropheMax: 3,
+                    healthMax: parseInt(document.getElementById('max-health').value) || 3,
+                    cards: {
+                        success_narrow: {label: "Réussite de justesse", catastropheCost: 1, outcomeType: "success"},
+                        success_triumph: {label: "Réussite triomphale", catastropheCost: 2, outcomeType: "success"},
+                        fail_narrow: {label: "Échec de justesse", catastropheCost: 0, outcomeType: "fail"},
+                        fail_catastrophic: {label: "Échec catastrophique", catastropheCost: 0, outcomeType: "fail_crit"}
+                    }
                 },
                 walls: walls,
                 water: water,
@@ -755,15 +1051,35 @@
             a.href = url;
             a.download = 'challenges.json';
             a.click();
+
+            console.log('✅ Export réussi avec validation complète');
         }
 
         function copyJSON() {
+            // Validate before copy
+            const validation = validateChallenges();
+
+            if (validation.errors.length > 0) {
+                alert('❌ ERREURS CRITIQUES - Copie annulée:\n\n' + validation.errors.join('\n') + '\n\nCorrigez ces erreurs avant de copier.');
+                return;
+            }
+
             const config = {
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
                 startPos: {
                     x: parseInt(document.getElementById('start-x').value),
                     y: parseInt(document.getElementById('start-y').value)
+                },
+                mechanics: {
+                    catastropheMax: 3,
+                    healthMax: parseInt(document.getElementById('max-health').value) || 3,
+                    cards: {
+                        success_narrow: {label: "Réussite de justesse", catastropheCost: 1, outcomeType: "success"},
+                        success_triumph: {label: "Réussite triomphale", catastropheCost: 2, outcomeType: "success"},
+                        fail_narrow: {label: "Échec de justesse", catastropheCost: 0, outcomeType: "fail"},
+                        fail_catastrophic: {label: "Échec catastrophique", catastropheCost: 0, outcomeType: "fail_crit"}
+                    }
                 },
                 walls: walls,
                 water: water,
@@ -773,7 +1089,11 @@
 
             const json = JSON.stringify(config, null, 2);
             navigator.clipboard.writeText(json).then(() => {
-                alert('JSON copié dans le presse-papier!');
+                let message = '✅ JSON copié dans le presse-papier!';
+                if (validation.warnings.length > 0) {
+                    message += '\n\n⚠️ Avertissements:\n' + validation.warnings.join('\n');
+                }
+                alert(message);
             });
         }
 
@@ -803,6 +1123,13 @@
                         startPos = data.startPos;
                     }
 
+                    // Support both old and new formats
+                    if (data.mechanics && data.mechanics.healthMax) {
+                        document.getElementById('max-health').value = data.mechanics.healthMax;
+                    } else if (data.maxHealth) {
+                        document.getElementById('max-health').value = data.maxHealth;
+                    }
+
                     walls = data.walls || [];
                     water = data.water || [];
                     objects = data.objects || [];
@@ -812,7 +1139,20 @@
                     updateChallengesList();
                     updateObjectsList();
                     render();
-                    alert('Configuration importée avec succès!');
+
+                    // Validate imported data
+                    const validation = validateChallenges();
+                    let message = '✅ Configuration importée avec succès!';
+
+                    if (validation.errors.length > 0) {
+                        message += '\n\n❌ ERREURS trouvées:\n' + validation.errors.join('\n');
+                    }
+
+                    if (validation.warnings.length > 0) {
+                        message += '\n\n⚠️ Avertissements:\n' + validation.warnings.join('\n');
+                    }
+
+                    alert(message);
                 } catch (error) {
                     alert('Erreur lors de l\'import: ' + error.message);
                 }

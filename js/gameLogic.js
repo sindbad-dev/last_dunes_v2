@@ -3,6 +3,8 @@ class GameLogic {
         this.ui = uiManager;
         this.catastropheLevel = 0;
         this.maxCatastrophe = 3;
+        this.currentHealth = 3;
+        this.maxHealth = 3;
         this.history = []; // Pour Yggdrasil
         this.challengesSolved = 0;
         this.totalChallenges = 0;
@@ -10,6 +12,11 @@ class GameLogic {
 
     init(levelData) {
         this.totalChallenges = levelData.challenges.length;
+        // Load health max from level data
+        if (levelData.mechanics && levelData.mechanics.healthMax) {
+            this.maxHealth = levelData.mechanics.healthMax;
+            this.currentHealth = this.maxHealth;
+        }
     }
 
     // Appelé quand le joueur clique sur une carte
@@ -17,6 +24,7 @@ class GameLogic {
         let actualOutcome = cardType;
         let narrativeResult = "";
         let wasForced = false;
+        let healthEffect = 0;
 
         // MÉCANIQUE PRINCIPALE : Vérification Catastrophe
         if (this.catastropheLevel >= this.maxCatastrophe) {
@@ -33,6 +41,27 @@ class GameLogic {
             this.catastropheLevel += cardDef.catastropheCost;
         }
 
+        // Apply health effects
+        if (challengeData.healthEffects && challengeData.healthEffects[actualOutcome] !== undefined) {
+            healthEffect = challengeData.healthEffects[actualOutcome];
+            this.currentHealth += healthEffect;
+
+            // Clamp health between 0 and maxHealth
+            if (this.currentHealth > this.maxHealth) {
+                this.currentHealth = this.maxHealth;
+            }
+            if (this.currentHealth < 0) {
+                this.currentHealth = 0;
+            }
+
+            // Add health effect to narrative
+            if (healthEffect > 0) {
+                narrativeResult += ` [+${healthEffect} ❤️]`;
+            } else if (healthEffect < 0) {
+                narrativeResult += ` [${healthEffect} ❤️]`;
+            }
+        }
+
         // Sauvegarde pour l'arbre avec informations détaillées
         this.history.push({
             challengeName: challengeData.name || challengeData.description,
@@ -43,14 +72,25 @@ class GameLogic {
             result: narrativeResult,
             outcomeType: actualOutcome,
             catastropheCost: cardDef.catastropheCost || 0,
+            healthEffect: healthEffect,
             wasForced: wasForced
         });
 
         // Mise à jour UI
         this.ui.updateGauge(this.catastropheLevel);
-        this.ui.showResult(narrativeResult, () => {
-            this.checkEndGame();
-        });
+        this.ui.updateHealthBar(this.currentHealth, this.maxHealth);
+        this.ui.updateDeckState();
+
+        // Check for game over due to health
+        if (this.currentHealth <= 0) {
+            this.ui.showResult(narrativeResult + "\n\n💀 GAME OVER - Vous êtes mort !", () => {
+                this.ui.showYggdrasil(this.history);
+            });
+        } else {
+            this.ui.showResult(narrativeResult, () => {
+                this.checkEndGame();
+            });
+        }
     }
 
     checkEndGame() {
