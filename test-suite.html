@@ -857,12 +857,34 @@
                     function enrichChallengesWithNarrative(challenges, narrativeTree) {
                         return challenges.map(challenge => {
                             const node = narrativeTree.nodes.find(n => n.id === challenge.id);
-                            return {
+                            const enriched = {
                                 ...challenge,
                                 name: node.name,
                                 icon: node.icon,
                                 color: node.color
                             };
+
+                            // Convertir outcomes d'objets à chaînes
+                            if (challenge.outcomes) {
+                                enriched.outcomes = {};
+                                for (let outcomeType in challenge.outcomes) {
+                                    const outcome = challenge.outcomes[outcomeType];
+                                    enriched.outcomes[outcomeType] = typeof outcome === 'string' ? outcome : outcome.text;
+                                }
+                            }
+
+                            // Extraire healthEffects
+                            if (challenge.outcomes) {
+                                enriched.healthEffects = {};
+                                for (let outcomeType in challenge.outcomes) {
+                                    const outcome = challenge.outcomes[outcomeType];
+                                    if (typeof outcome === 'object' && outcome.healthChange !== undefined) {
+                                        enriched.healthEffects[outcomeType] = outcome.healthChange;
+                                    }
+                                }
+                            }
+
+                            return enriched;
                         });
                     }
 
@@ -870,7 +892,12 @@
                         id: 'node_0',
                         coordinates: {x: 14, y: 18},
                         triggerRadius: 1,
-                        outcomes: {}
+                        outcomes: {
+                            success_triumph: {text: 'Test triumph', cost: 2, healthChange: 0},
+                            success_narrow: {text: 'Test narrow', cost: 1, healthChange: 0},
+                            fail_narrow: {text: 'Test fail', cost: 0, healthChange: -1},
+                            fail_catastrophic: {text: 'Test cata', cost: 0, healthChange: -2}
+                        }
                     }];
 
                     const narrativeTree = {
@@ -895,6 +922,16 @@
 
                     if (enriched[0].color !== '#00ff00') {
                         throw new Error('Enrichissement de la couleur échoué');
+                    }
+
+                    // Vérifier conversion des outcomes
+                    if (enriched[0].outcomes.success_triumph !== 'Test triumph') {
+                        throw new Error('Conversion des outcomes échouée');
+                    }
+
+                    // Vérifier extraction des healthEffects
+                    if (enriched[0].healthEffects.success_triumph !== 0) {
+                        throw new Error('Extraction des healthEffects échouée');
                     }
                 }, container),
 
@@ -1008,6 +1045,16 @@
 
         // Exécuter automatiquement au chargement
         window.addEventListener('load', () => {
+            // Vérifier si ouvert via file://
+            if (window.location.protocol === 'file:') {
+                log('⚠️ ATTENTION: Fichier ouvert en file://', 'error');
+                log('Les tests de chargement JSON échoueront à cause de CORS', 'warn');
+                log('Solution: Lancez un serveur web local', 'warn');
+                log('  python3 -m http.server 8000', 'info');
+                log('  Puis ouvrez http://localhost:8000/test-suite.html', 'info');
+                log('', 'info');
+            }
+
             log('Suite de tests chargée. Prêt à exécuter.', 'info');
             log('Cliquez sur "Exécuter Tous les Tests" pour commencer.', 'info');
         });
