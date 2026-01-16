@@ -37,6 +37,28 @@ function enrichChallengesWithNarrative(challenges, narrativeTree) {
             rewardCard: node.rewardCard || null
         };
 
+        // Convertir les outcomes d'objets à chaînes si nécessaire
+        if (challenge.outcomes) {
+            enriched.outcomes = {};
+            for (let outcomeType in challenge.outcomes) {
+                const outcome = challenge.outcomes[outcomeType];
+                // Si l'outcome est un objet avec une propriété text, extraire le texte
+                enriched.outcomes[outcomeType] = typeof outcome === 'string' ? outcome : outcome.text;
+            }
+        }
+
+        // Convertir healthChange d'objets à propriété directe si nécessaire
+        if (challenge.outcomes) {
+            enriched.healthEffects = {};
+            for (let outcomeType in challenge.outcomes) {
+                const outcome = challenge.outcomes[outcomeType];
+                // Si l'outcome est un objet avec healthChange
+                if (typeof outcome === 'object' && outcome.healthChange !== undefined) {
+                    enriched.healthEffects[outcomeType] = outcome.healthChange;
+                }
+            }
+        }
+
         console.log(`✅ Challenge enrichi: ${enriched.name} (${enriched.id})`);
         return enriched;
     });
