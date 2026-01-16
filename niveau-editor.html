@@ -192,6 +192,100 @@
             background: #333;
             color: #ffd700;
         }
+
+        .challenge-item {
+            background: #444;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #ffd700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .challenge-item:hover {
+            background: #555;
+            transform: translateX(3px);
+        }
+
+        .challenge-item.selected {
+            border-left-color: #4CAF50;
+            background: #4a4a4a;
+        }
+
+        .challenge-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .challenge-icon {
+            font-size: 20px;
+        }
+
+        .challenge-name {
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .challenge-type {
+            font-size: 9px;
+            background: #666;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .challenge-info {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .challenge-placed {
+            background: #1b5e20;
+            color: #a5d6a7;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .outcomes-preview {
+            font-size: 10px;
+            color: #888;
+            margin-top: 5px;
+            padding: 5px;
+            background: #3a3a3a;
+            border-radius: 3px;
+        }
+
+        .narrative-info {
+            background: #2a4d7a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+
+        .import-status {
+            padding: 8px;
+            border-radius: 3px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .import-status.success {
+            background: #1b5e20;
+            color: #a5d6a7;
+        }
+
+        .import-status.warning {
+            background: #f57c00;
+            color: #fff3e0;
+        }
     </style>
 </head>
 <body>
@@ -217,6 +311,7 @@
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('terrain')">Terrain</button>
                 <button class="tab" onclick="switchTab('objects')">Objets</button>
+                <button class="tab" onclick="switchTab('challenges')">Challenges</button>
                 <button class="tab" onclick="switchTab('config')">Config</button>
             </div>
 
@@ -284,6 +379,49 @@
                 </div>
             </div>
 
+            <!-- Challenges Tab -->
+            <div id="tab-challenges" class="tab-content" style="display:none;">
+                <div class="tool-section">
+                    <h3>🌳 Arbre Narratif</h3>
+                    <div id="narrative-status" class="narrative-info">
+                        Aucun arbre narratif chargé
+                    </div>
+                    <label>Importer un arbre narratif:</label>
+                    <input type="file" id="narrative-upload" accept=".json" onchange="importNarrativeTree()">
+                    <button onclick="document.getElementById('narrative-upload').click()">
+                        📂 Charger Arbre Narratif
+                    </button>
+                    <button onclick="openChallengeEditor()">
+                        🌳 Ouvrir Éditeur d'Arbre
+                    </button>
+                </div>
+
+                <div class="tool-section" id="challenges-library-section" style="display:none;">
+                    <h3>📚 Bibliothèque de Challenges</h3>
+                    <p style="font-size: 11px; color: #aaa; margin-bottom: 10px;">
+                        Cliquez sur un challenge pour le sélectionner, puis cliquez sur la carte pour le placer.
+                    </p>
+                    <div id="challenges-library"></div>
+                </div>
+
+                <div class="tool-section" id="placed-challenges-section" style="display:none;">
+                    <h3>📍 Challenges Placés (<span id="challenges-count">0</span>)</h3>
+                    <div id="placed-challenges-list"></div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>💡 Aide</h3>
+                    <p style="font-size: 11px; color: #aaa;">
+                        <strong>Workflow:</strong><br>
+                        1. Créez votre arbre narratif dans challenge-editor.html<br>
+                        2. Exportez-le en JSON<br>
+                        3. Importez-le ici<br>
+                        4. Placez les challenges sur la carte<br>
+                        5. Exportez le niveau complet
+                    </p>
+                </div>
+            </div>
+
             <!-- Config Tab -->
             <div id="tab-config" class="tab-content" style="display:none;">
                 <div class="tool-section">
@@ -333,6 +471,13 @@
         let water = [];
         let objects = [];
 
+        // Narrative tree and challenges
+        let narrativeTree = null;
+        let availableChallenges = [];
+        let placedChallenges = [];
+        let selectedChallenge = null;
+        let waitingForChallengePlace = false;
+
         // Tool state
         let currentTool = null;
         let selectedObject = null;
@@ -378,6 +523,16 @@
             const y = Math.floor((e.clientY - rect.top) / gridSize);
 
             if (x < 0 || y < 0 || x >= 20 || y >= 20) return;
+
+            // Challenge placement
+            if (waitingForChallengePlace && selectedChallenge) {
+                placeChallenge(x, y, selectedChallenge);
+                waitingForChallengePlace = false;
+                selectedChallenge = null;
+                canvas.style.cursor = 'crosshair';
+                updateCurrentMode();
+                return;
+            }
 
             // Object placement
             if (selectedObject) {
@@ -437,6 +592,8 @@
         function selectTool(tool) {
             currentTool = tool;
             selectedObject = null;
+            waitingForChallengePlace = false;
+            selectedChallenge = null;
 
             // Update UI
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
@@ -449,6 +606,8 @@
             if (!emoji) return;
             selectedObject = emoji;
             currentTool = null;
+            waitingForChallengePlace = false;
+            selectedChallenge = null;
 
             document.querySelectorAll('.object-lib-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.textContent.includes(emoji));
@@ -477,7 +636,10 @@
             let mode = 'Sélection';
             let tool = 'Aucun';
 
-            if (selectedObject) {
+            if (waitingForChallengePlace && selectedChallenge) {
+                mode = 'Placement Challenge';
+                tool = `${selectedChallenge.icon} ${selectedChallenge.name}`;
+            } else if (selectedObject) {
                 mode = 'Placement Objet';
                 tool = selectedObject;
             } else if (currentTool === 'wall') {
@@ -770,6 +932,45 @@
                 ctx.fillText(obj.emoji, ox, oy);
             }
 
+            // Draw placed challenges
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let challenge of placedChallenges) {
+                const cx = challenge.coordinates.x * gridSize;
+                const cy = challenge.coordinates.y * gridSize;
+
+                // Background with challenge color
+                ctx.fillStyle = challenge.color || '#ff00ff';
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(cx, cy, gridSize, gridSize);
+                ctx.globalAlpha = 1;
+
+                // Border
+                ctx.strokeStyle = challenge.color || '#ff00ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(cx, cy, gridSize, gridSize);
+
+                // Icon
+                ctx.fillStyle = '#fff';
+                ctx.fillText(challenge.icon, cx + gridSize/2, cy + gridSize/2);
+
+                // Trigger radius indicator
+                if (challenge.triggerRadius > 0) {
+                    ctx.strokeStyle = challenge.color || '#ff00ff';
+                    ctx.globalAlpha = 0.3;
+                    ctx.lineWidth = 1;
+                    const radius = challenge.triggerRadius * gridSize;
+                    ctx.strokeRect(
+                        cx - radius + gridSize/2,
+                        cy - radius + gridSize/2,
+                        gridSize + radius * 2,
+                        gridSize + radius * 2
+                    );
+                    ctx.globalAlpha = 1;
+                }
+            }
+
             // Draw start position
             const sx = startPos.x * gridSize;
             const sy = startPos.y * gridSize;
@@ -786,6 +987,319 @@
             // Reset
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
+        }
+
+        // ===========================================
+        // NARRATIVE TREE AND CHALLENGES FUNCTIONS
+        // ===========================================
+
+        function importNarrativeTree() {
+            const file = document.getElementById('narrative-upload').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Validate structure
+                    if (!data.nodes || !Array.isArray(data.nodes)) {
+                        throw new Error('Structure invalide: "nodes" manquant ou invalide');
+                    }
+
+                    narrativeTree = data;
+                    availableChallenges = data.nodes.map(node => ({...node}));
+
+                    // Update UI
+                    document.getElementById('narrative-status').className = 'import-status success';
+                    document.getElementById('narrative-status').innerHTML = `
+                        ✓ Arbre narratif chargé: <strong>${availableChallenges.length} challenges</strong> disponibles<br>
+                        <small>${data.connections ? data.connections.length : 0} connexions narratives</small>
+                    `;
+
+                    document.getElementById('challenges-library-section').style.display = 'block';
+                    updateChallengesLibrary();
+
+                    alert(`Arbre narratif importé avec succès!\n${availableChallenges.length} challenges disponibles.`);
+                } catch (error) {
+                    alert('Erreur lors de l\'import: ' + error.message);
+                    document.getElementById('narrative-status').className = 'import-status warning';
+                    document.getElementById('narrative-status').textContent = '⚠️ Erreur: ' + error.message;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateChallengesLibrary() {
+            const library = document.getElementById('challenges-library');
+
+            if (availableChallenges.length === 0) {
+                library.innerHTML = '<em style="color:#888">Aucun challenge disponible</em>';
+                return;
+            }
+
+            library.innerHTML = availableChallenges.map((challenge, index) => {
+                const isPlaced = placedChallenges.some(c => c.originalId === challenge.id);
+                const placedInfo = isPlaced ? '<div class="challenge-placed">✓ Placé sur la carte</div>' : '';
+
+                const outcomesCount = challenge.outcomes ? Object.keys(challenge.outcomes).length : 0;
+
+                return `
+                    <div class="challenge-item ${selectedChallenge && selectedChallenge.id === challenge.id ? 'selected' : ''}"
+                         onclick="selectChallengeForPlacement('${challenge.id}')">
+                        <div class="challenge-header">
+                            <span class="challenge-icon">${challenge.icon || '⚔️'}</span>
+                            <span class="challenge-name">${challenge.name}</span>
+                            <span class="challenge-type">${challenge.type || 'challenge'}</span>
+                        </div>
+                        <div class="challenge-info">
+                            ${challenge.dialogue || 'Aucun dialogue'}
+                        </div>
+                        <div class="outcomes-preview">
+                            ${outcomesCount} conséquences définies
+                        </div>
+                        ${placedInfo}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectChallengeForPlacement(challengeId) {
+            const challenge = availableChallenges.find(c => c.id === challengeId);
+            if (!challenge) return;
+
+            selectedChallenge = challenge;
+            waitingForChallengePlace = true;
+            currentTool = null;
+            selectedObject = null;
+
+            canvas.style.cursor = 'cell';
+            updateChallengesLibrary();
+            updateCurrentMode();
+
+            alert(`Challenge "${challenge.name}" sélectionné.\nCliquez sur la carte pour le placer.`);
+        }
+
+        function placeChallenge(x, y, challenge) {
+            // Check if a challenge is already at this position
+            const existing = placedChallenges.findIndex(c =>
+                c.coordinates.x === x && c.coordinates.y === y
+            );
+
+            if (existing !== -1) {
+                if (!confirm('Un challenge existe déjà à cette position. Le remplacer ?')) {
+                    return;
+                }
+                placedChallenges.splice(existing, 1);
+            }
+
+            // Create placed challenge with coordinates
+            const placedChallenge = {
+                ...challenge,
+                originalId: challenge.id,
+                id: `placed_${Date.now()}`,
+                coordinates: { x, y },
+                triggerRadius: 1 // Default trigger radius
+            };
+
+            placedChallenges.push(placedChallenge);
+
+            document.getElementById('placed-challenges-section').style.display = 'block';
+            updatePlacedChallengesList();
+            updateChallengesLibrary();
+            updateStats();
+            render();
+        }
+
+        function updatePlacedChallengesList() {
+            const list = document.getElementById('placed-challenges-list');
+            document.getElementById('challenges-count').textContent = placedChallenges.length;
+
+            if (placedChallenges.length === 0) {
+                list.innerHTML = '<em style="color:#888">Aucun challenge placé</em>';
+                return;
+            }
+
+            list.innerHTML = placedChallenges.map((challenge, index) => `
+                <div class="challenge-item">
+                    <div class="challenge-header">
+                        <span class="challenge-icon">${challenge.icon || '⚔️'}</span>
+                        <span class="challenge-name">${challenge.name}</span>
+                        <span class="challenge-type">${challenge.type || 'challenge'}</span>
+                    </div>
+                    <div class="challenge-info">
+                        📍 Position: (${challenge.coordinates.x}, ${challenge.coordinates.y})<br>
+                        🎯 Rayon: ${challenge.triggerRadius}
+                    </div>
+                    <button class="delete" onclick="removePlacedChallenge(${index})">🗑️ Supprimer</button>
+                </div>
+            `).join('');
+        }
+
+        function removePlacedChallenge(index) {
+            if (!confirm('Supprimer ce challenge de la carte ?')) return;
+
+            placedChallenges.splice(index, 1);
+            updatePlacedChallengesList();
+            updateChallengesLibrary();
+            updateStats();
+            render();
+        }
+
+        function openChallengeEditor() {
+            window.open('challenge-editor.html', '_blank');
+        }
+
+        // ===========================================
+        // MODIFIED EXPORT FUNCTIONS
+        // ===========================================
+
+        function exportJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                walls: walls,
+                water: water,
+                objects: objects,
+                challenges: placedChallenges.map(c => ({
+                    id: c.originalId || c.id,
+                    name: c.name,
+                    type: c.type,
+                    coordinates: c.coordinates,
+                    triggerRadius: c.triggerRadius,
+                    icon: c.icon,
+                    color: c.color,
+                    description: c.dialogue || '',
+                    dialogue_preview: c.dialogue || '',
+                    outcomes: c.outcomes
+                })),
+                narrativeTree: narrativeTree
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'level-complete.json';
+            a.click();
+
+            alert('Niveau complet exporté avec challenges et arbre narratif !');
+        }
+
+        function copyJSON() {
+            const config = {
+                mapFile: document.getElementById('map-url').value || 'assets/level1.png',
+                gridSize: gridSize,
+                startPos: {
+                    x: parseInt(document.getElementById('start-x').value),
+                    y: parseInt(document.getElementById('start-y').value)
+                },
+                walls: walls,
+                water: water,
+                objects: objects,
+                challenges: placedChallenges.map(c => ({
+                    id: c.originalId || c.id,
+                    name: c.name,
+                    type: c.type,
+                    coordinates: c.coordinates,
+                    triggerRadius: c.triggerRadius,
+                    icon: c.icon,
+                    color: c.color,
+                    description: c.dialogue || '',
+                    dialogue_preview: c.dialogue || '',
+                    outcomes: c.outcomes
+                })),
+                narrativeTree: narrativeTree
+            };
+
+            const json = JSON.stringify(config, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('JSON copié dans le presse-papier (avec challenges) !');
+            });
+        }
+
+        function importJSON() {
+            const file = document.getElementById('json-upload').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.mapFile) {
+                        document.getElementById('map-url').value = data.mapFile;
+                        loadMapFromURL();
+                    }
+
+                    if (data.gridSize) {
+                        gridSize = data.gridSize;
+                        document.getElementById('grid-size-input').value = gridSize;
+                        document.getElementById('grid-size').textContent = gridSize;
+                    }
+
+                    if (data.startPos) {
+                        document.getElementById('start-x').value = data.startPos.x;
+                        document.getElementById('start-y').value = data.startPos.y;
+                        startPos = data.startPos;
+                    }
+
+                    walls = data.walls || [];
+                    water = data.water || [];
+                    objects = data.objects || [];
+
+                    // Import challenges if present
+                    if (data.challenges && Array.isArray(data.challenges)) {
+                        placedChallenges = data.challenges;
+                        document.getElementById('placed-challenges-section').style.display = 'block';
+                        updatePlacedChallengesList();
+                    }
+
+                    // Import narrative tree if present
+                    if (data.narrativeTree) {
+                        narrativeTree = data.narrativeTree;
+                        availableChallenges = narrativeTree.nodes ? narrativeTree.nodes.map(n => ({...n})) : [];
+
+                        document.getElementById('narrative-status').className = 'import-status success';
+                        document.getElementById('narrative-status').innerHTML = `
+                            ✓ Arbre narratif importé: <strong>${availableChallenges.length} challenges</strong>
+                        `;
+
+                        document.getElementById('challenges-library-section').style.display = 'block';
+                        updateChallengesLibrary();
+                    }
+
+                    updateStats();
+                    updateObjectsList();
+                    render();
+                    alert('Configuration importée avec succès!');
+                } catch (error) {
+                    alert('Erreur lors de l\'import: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Update switchTab to handle new tab
+        const originalSwitchTab = switchTab;
+        function switchTab(tabName) {
+            activeTab = tabName;
+
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+            document.getElementById('current-layer').textContent =
+                tabName === 'terrain' ? 'Terrain' :
+                tabName === 'objects' ? 'Objets' :
+                tabName === 'challenges' ? 'Challenges' : 'Configuration';
         }
 
         // Initial state
