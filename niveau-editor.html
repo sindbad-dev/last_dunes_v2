@@ -473,6 +473,7 @@
 
         // Narrative tree and challenges
         let narrativeTree = null;
+        let gameMechanics = null;
         let availableChallenges = [];
         let placedChallenges = [];
         let selectedChallenge = null;
@@ -1010,11 +1011,47 @@
                     narrativeTree = data;
                     availableChallenges = data.nodes.map(node => ({...node}));
 
+                    // Import game mechanics if present
+                    if (data.mechanics) {
+                        gameMechanics = data.mechanics;
+                        console.log('✅ Mécaniques de jeu chargées:', gameMechanics);
+                    } else {
+                        // Use default mechanics if not present
+                        gameMechanics = {
+                            catastropheMax: 3,
+                            healthMax: 3,
+                            cards: {
+                                success_narrow: {
+                                    label: "Réussite de justesse",
+                                    catastropheCost: 1,
+                                    outcomeType: "success"
+                                },
+                                success_triumph: {
+                                    label: "Réussite triomphale",
+                                    catastropheCost: 2,
+                                    outcomeType: "success"
+                                },
+                                fail_narrow: {
+                                    label: "Échec de justesse",
+                                    catastropheCost: 0,
+                                    outcomeType: "fail"
+                                },
+                                fail_catastrophic: {
+                                    label: "Échec catastrophique",
+                                    catastropheCost: 0,
+                                    outcomeType: "fail_crit"
+                                }
+                            }
+                        };
+                        console.log('⚠️ Mécaniques par défaut utilisées');
+                    }
+
                     // Update UI
                     document.getElementById('narrative-status').className = 'import-status success';
                     document.getElementById('narrative-status').innerHTML = `
                         ✓ Arbre narratif chargé: <strong>${availableChallenges.length} challenges</strong> disponibles<br>
-                        <small>${data.connections ? data.connections.length : 0} connexions narratives</small>
+                        <small>${data.connections ? data.connections.length : 0} connexions narratives</small><br>
+                        <small>⚙️ Mécaniques: ${gameMechanics ? 'configurées' : 'par défaut'}</small>
                     `;
 
                     document.getElementById('challenges-library-section').style.display = 'block';
@@ -1155,7 +1192,36 @@
         // ===========================================
 
         function exportJSON() {
+            // Use gameMechanics if available, otherwise use defaults
+            const mechanics = gameMechanics || {
+                catastropheMax: 3,
+                healthMax: 3,
+                cards: {
+                    success_narrow: {
+                        label: "Réussite de justesse",
+                        catastropheCost: 1,
+                        outcomeType: "success"
+                    },
+                    success_triumph: {
+                        label: "Réussite triomphale",
+                        catastropheCost: 2,
+                        outcomeType: "success"
+                    },
+                    fail_narrow: {
+                        label: "Échec de justesse",
+                        catastropheCost: 0,
+                        outcomeType: "fail"
+                    },
+                    fail_catastrophic: {
+                        label: "Échec catastrophique",
+                        catastropheCost: 0,
+                        outcomeType: "fail_crit"
+                    }
+                }
+            };
+
             const config = {
+                name: "Niveau Personnalisé",
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
                 startPos: {
@@ -1165,6 +1231,7 @@
                 walls: walls,
                 water: water,
                 objects: objects,
+                mechanics: mechanics,
                 challenges: placedChallenges.map(c => ({
                     id: c.originalId || c.id,
                     name: c.name,
@@ -1188,11 +1255,40 @@
             a.download = 'level-complete.json';
             a.click();
 
-            alert('Niveau complet exporté avec challenges et arbre narratif !');
+            alert('Niveau complet exporté avec mécaniques de jeu, challenges et arbre narratif !');
         }
 
         function copyJSON() {
+            // Use gameMechanics if available, otherwise use defaults
+            const mechanics = gameMechanics || {
+                catastropheMax: 3,
+                healthMax: 3,
+                cards: {
+                    success_narrow: {
+                        label: "Réussite de justesse",
+                        catastropheCost: 1,
+                        outcomeType: "success"
+                    },
+                    success_triumph: {
+                        label: "Réussite triomphale",
+                        catastropheCost: 2,
+                        outcomeType: "success"
+                    },
+                    fail_narrow: {
+                        label: "Échec de justesse",
+                        catastropheCost: 0,
+                        outcomeType: "fail"
+                    },
+                    fail_catastrophic: {
+                        label: "Échec catastrophique",
+                        catastropheCost: 0,
+                        outcomeType: "fail_crit"
+                    }
+                }
+            };
+
             const config = {
+                name: "Niveau Personnalisé",
                 mapFile: document.getElementById('map-url').value || 'assets/level1.png',
                 gridSize: gridSize,
                 startPos: {
@@ -1202,6 +1298,7 @@
                 walls: walls,
                 water: water,
                 objects: objects,
+                mechanics: mechanics,
                 challenges: placedChallenges.map(c => ({
                     id: c.originalId || c.id,
                     name: c.name,
@@ -1219,7 +1316,7 @@
 
             const json = JSON.stringify(config, null, 2);
             navigator.clipboard.writeText(json).then(() => {
-                alert('JSON copié dans le presse-papier (avec challenges) !');
+                alert('JSON copié dans le presse-papier (avec mécaniques et challenges) !');
             });
         }
 
@@ -1272,6 +1369,12 @@
 
                         document.getElementById('challenges-library-section').style.display = 'block';
                         updateChallengesLibrary();
+                    }
+
+                    // Import game mechanics if present
+                    if (data.mechanics) {
+                        gameMechanics = data.mechanics;
+                        console.log('✅ Mécaniques de jeu importées:', gameMechanics);
                     }
 
                     updateStats();
