@@ -456,6 +456,33 @@
         </div>
 
         <div id="sidebar">
+            <!-- Game Mechanics Configuration -->
+            <div id="game-mechanics" class="section">
+                <h3>⚙️ Configuration des Mécaniques</h3>
+
+                <div class="form-group">
+                    <label>Santé Maximum</label>
+                    <input type="number" id="mechanics-health-max" value="3" min="1" max="10" onchange="updateMechanicsConfig()">
+                </div>
+
+                <div class="form-group">
+                    <label>Catastrophe Maximum</label>
+                    <input type="number" id="mechanics-catastrophe-max" value="3" min="1" max="10" onchange="updateMechanicsConfig()">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="mechanics-use-cards" checked onchange="toggleCardsConfig()" style="width: auto;">
+                        Utiliser les cartes par défaut
+                    </label>
+                    <small style="color: #888; font-size: 10px;">Les cartes standard (réussite/échec) seront incluses</small>
+                </div>
+
+                <div id="cards-preview" style="font-size: 10px; color: #aaa; background: #3a3a3a; padding: 8px; border-radius: 3px; margin-top: 5px;">
+                    ✓ 4 cartes configurées: success_triumph, success_narrow, fail_narrow, fail_catastrophic
+                </div>
+            </div>
+
             <!-- Quick selection list -->
             <div id="quick-selection" class="section">
                 <h3>🎯 Sélection Rapide</h3>
@@ -650,6 +677,34 @@
         let mousePos = { x: 0, y: 0 };
         let dragStart = { x: 0, y: 0 };
         let nodeIdCounter = 1;
+
+        // Game Mechanics Configuration
+        let gameMechanics = {
+            catastropheMax: 3,
+            healthMax: 3,
+            cards: {
+                success_narrow: {
+                    label: "Réussite de justesse",
+                    catastropheCost: 1,
+                    outcomeType: "success"
+                },
+                success_triumph: {
+                    label: "Réussite triomphale",
+                    catastropheCost: 2,
+                    outcomeType: "success"
+                },
+                fail_narrow: {
+                    label: "Échec de justesse",
+                    catastropheCost: 0,
+                    outcomeType: "fail"
+                },
+                fail_catastrophic: {
+                    label: "Échec catastrophique",
+                    catastropheCost: 0,
+                    outcomeType: "fail_crit"
+                }
+            }
+        };
 
         // Initialize
         render();
@@ -1069,8 +1124,46 @@
             }
         }
 
+        function updateMechanicsConfig() {
+            gameMechanics.healthMax = parseInt(document.getElementById('mechanics-health-max').value) || 3;
+            gameMechanics.catastropheMax = parseInt(document.getElementById('mechanics-catastrophe-max').value) || 3;
+        }
+
+        function toggleCardsConfig() {
+            const useCards = document.getElementById('mechanics-use-cards').checked;
+            if (useCards) {
+                gameMechanics.cards = {
+                    success_narrow: {
+                        label: "Réussite de justesse",
+                        catastropheCost: 1,
+                        outcomeType: "success"
+                    },
+                    success_triumph: {
+                        label: "Réussite triomphale",
+                        catastropheCost: 2,
+                        outcomeType: "success"
+                    },
+                    fail_narrow: {
+                        label: "Échec de justesse",
+                        catastropheCost: 0,
+                        outcomeType: "fail"
+                    },
+                    fail_catastrophic: {
+                        label: "Échec catastrophique",
+                        catastropheCost: 0,
+                        outcomeType: "fail_crit"
+                    }
+                };
+                document.getElementById('cards-preview').innerHTML = '✓ 4 cartes configurées: success_triumph, success_narrow, fail_narrow, fail_catastrophic';
+            } else {
+                gameMechanics.cards = {};
+                document.getElementById('cards-preview').innerHTML = '⚠️ Aucune carte configurée';
+            }
+        }
+
         function exportJSON() {
             const data = {
+                mechanics: gameMechanics,
                 nodes: nodes,
                 connections: connections
             };
@@ -1083,7 +1176,7 @@
             a.download = 'narrative-tree.json';
             a.click();
 
-            alert('Arbre narratif exporté !');
+            alert('Arbre narratif exporté avec configuration des mécaniques !');
         }
 
         function importJSON() {
@@ -1101,6 +1194,14 @@
                         const data = JSON.parse(event.target.result);
                         nodes = data.nodes || [];
                         connections = data.connections || [];
+
+                        // Import game mechanics if present
+                        if (data.mechanics) {
+                            gameMechanics = data.mechanics;
+                            document.getElementById('mechanics-health-max').value = gameMechanics.healthMax || 3;
+                            document.getElementById('mechanics-catastrophe-max').value = gameMechanics.catastropheMax || 3;
+                            document.getElementById('mechanics-use-cards').checked = gameMechanics.cards && Object.keys(gameMechanics.cards).length > 0;
+                        }
 
                         if (nodes.length > 0) {
                             nodeIdCounter = Math.max(...nodes.map(n =>
