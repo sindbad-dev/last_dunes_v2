@@ -1,4 +1,5 @@
 {
+  "name": "Le Repaire du Nécromancien",
   "mapFile": "assets/level1.png",
   "gridSize": 40,
   "startPos": {
@@ -8,6 +9,32 @@
   "walls": [],
   "water": [],
   "objects": [],
+  "mechanics": {
+    "catastropheMax": 3,
+    "healthMax": 3,
+    "cards": {
+      "success_narrow": {
+        "label": "Réussite de justesse",
+        "catastropheCost": 1,
+        "outcomeType": "success"
+      },
+      "success_triumph": {
+        "label": "Réussite triomphale",
+        "catastropheCost": 2,
+        "outcomeType": "success"
+      },
+      "fail_narrow": {
+        "label": "Échec de justesse",
+        "catastropheCost": 0,
+        "outcomeType": "fail"
+      },
+      "fail_catastrophic": {
+        "label": "Échec catastrophique",
+        "catastropheCost": 0,
+        "outcomeType": "fail_crit"
+      }
+    }
+  },
   "challenges": [
     {
       "id": "node_0",

@@ -64,42 +64,20 @@ function enrichChallengesWithNarrative(challenges, narrativeTree) {
     });
 }
 
-// Chargement des données
-// Priorité 1: level-complete.json (fichier complet exporté depuis niveau-editor)
-// Priorité 2: challenges.json (ancien format)
-// Fallback: level1.json
-Promise.all([
-    fetch('data/level-complete.json')
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
-    fetch('data/challenges.json')
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
-    fetch('data/level1.json').then(r => r.json())
-])
-.then(([levelCompleteData, challengesData, gameData]) => {
-    console.log("Fichiers chargés:", {
-        levelComplete: levelCompleteData ? '✅' : '❌',
-        challenges: challengesData ? '✅' : '❌',
-        level1: gameData ? '✅' : '❌'
-    });
+// Chargement des données depuis level-complete.json uniquement
+fetch('data/level-complete.json')
+.then(response => {
+    if (!response.ok) {
+        throw new Error(`Impossible de charger level-complete.json: ${response.status}`);
+    }
+    return response.json();
+})
+.then(levelData => {
+    console.log("✅ Fichier chargé: level-complete.json");
 
-    let levelData = null;
-    let loadSource = '';
-
-    // Déterminer quelle source utiliser
-    if (levelCompleteData) {
-        levelData = levelCompleteData;
-        loadSource = 'level-complete.json';
-        console.log("📦 Utilisation de level-complete.json (format complet avec arbre narratif)");
-    } else if (challengesData) {
-        levelData = challengesData;
-        loadSource = 'challenges.json';
-        console.log("📦 Utilisation de challenges.json (ancien format)");
-    } else {
-        levelData = gameData;
-        loadSource = 'level1.json';
-        console.log("📦 Fallback sur level1.json");
+    // Vérifier que les données essentielles sont présentes
+    if (!levelData.mechanics || !levelData.mechanics.cards) {
+        throw new Error("Le fichier level-complete.json doit contenir une section 'mechanics' avec les définitions de cartes");
     }
 
     // Configurer le niveau
@@ -135,11 +113,19 @@ Promise.all([
 
     // Placer les challenges sur la carte
     engine.placeInteractables(challenges);
-    console.log(`✅ ${challenges.length} challenges chargés depuis ${loadSource}`);
+    console.log(`✅ ${challenges.length} challenges placés sur la carte`);
 
-    // Utiliser level1.json pour les mécaniques de jeu
-    logic.init(gameData);
-    ui.init(gameData.mechanics.cards);
+    // Initialiser les mécaniques de jeu depuis level-complete.json
+    logic.init(levelData);
+    ui.init(levelData.mechanics.cards);
+    ui.initPersistentDeck(logic);
+
+    // Initialiser l'affichage de la santé et de la jauge
+    ui.updateHealthBar(logic.currentHealth, logic.maxHealth);
+    ui.updateGauge(logic.catastropheLevel);
+
+    console.log(`🎮 Mécaniques initialisées: catastropheMax=${levelData.mechanics.catastropheMax}, healthMax=${levelData.mechanics.healthMax}`);
+    console.log(`🎴 Deck persistant initialisé avec ${Object.keys(levelData.mechanics.cards).length} cartes`);
 
     // Boucle de jeu
     engine.onPlayerMove((pos) => {
@@ -152,7 +138,7 @@ Promise.all([
 
     engine.start();
     console.log("✅ Jeu démarré avec succès!");
-    console.log(`📍 Source: ${loadSource}`);
+    console.log(`📍 Niveau: ${levelInfo.name}`);
 })
 .catch(error => {
     console.error("❌ Erreur lors du chargement:", error);
