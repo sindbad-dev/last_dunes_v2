@@ -17,6 +17,12 @@ class GameLogic {
             this.maxHealth = levelData.mechanics.healthMax;
             this.currentHealth = this.maxHealth;
         }
+        // Load catastrophe max from level data
+        if (levelData.mechanics && levelData.mechanics.catastropheMax) {
+            this.maxCatastrophe = levelData.mechanics.catastropheMax;
+        }
+        // Reset catastrophe level at game start
+        this.catastropheLevel = 0;
     }
 
     // Appelé quand le joueur clique sur une carte
