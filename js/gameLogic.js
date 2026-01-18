@@ -105,4 +105,63 @@ class GameLogic {
             this.ui.showYggdrasil(this.history);
         }
     }
+
+    // Résoudre une carte optionnelle (reward card)
+    resolveOptionalCard(rewardCard, challengeData) {
+        let narrativeResult = rewardCard.outcomeText;
+        let healthEffect = rewardCard.healthChange || 0;
+
+        // Mise à jour de la jauge selon le coût de la carte
+        this.catastropheLevel += rewardCard.cost;
+
+        // Apply health effects
+        if (healthEffect !== 0) {
+            this.currentHealth += healthEffect;
+
+            // Clamp health between 0 and maxHealth
+            if (this.currentHealth > this.maxHealth) {
+                this.currentHealth = this.maxHealth;
+            }
+            if (this.currentHealth < 0) {
+                this.currentHealth = 0;
+            }
+
+            // Add health effect to narrative
+            if (healthEffect > 0) {
+                narrativeResult += ` [+${healthEffect} ❤️]`;
+            } else if (healthEffect < 0) {
+                narrativeResult += ` [${healthEffect} ❤️]`;
+            }
+        }
+
+        // Sauvegarde pour l'arbre avec informations détaillées
+        this.history.push({
+            challengeName: challengeData.name || challengeData.description,
+            challengeIcon: challengeData.icon || '❓',
+            challengeType: challengeData.type || 'challenge',
+            cardPlayed: rewardCard.label + ' ' + (rewardCard.icon || '🎁'),
+            cardType: 'optional_' + rewardCard.outcomeType,
+            result: narrativeResult,
+            outcomeType: rewardCard.outcomeType,
+            catastropheCost: rewardCard.cost || 0,
+            healthEffect: healthEffect,
+            wasForced: false
+        });
+
+        // Mise à jour UI
+        this.ui.updateGauge(this.catastropheLevel);
+        this.ui.updateHealthBar(this.currentHealth, this.maxHealth);
+        this.ui.updateDeckState();
+
+        // Check for game over due to health
+        if (this.currentHealth <= 0) {
+            this.ui.showResult(narrativeResult + "\n\n💀 GAME OVER - Vous êtes mort !", () => {
+                this.ui.showYggdrasil(this.history);
+            });
+        } else {
+            this.ui.showResult(narrativeResult, () => {
+                this.checkEndGame();
+            });
+        }
+    }
 }
