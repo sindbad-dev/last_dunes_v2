@@ -592,7 +592,7 @@
                 <div class="section">
                     <h3>🎁 Carte Récompense (Optionnelle)</h3>
                     <p style="font-size: 11px; color: #888; margin-bottom: 10px;">
-                        Définissez une carte spéciale que le joueur recevra après avoir réussi ce challenge.
+                        Définissez une carte spéciale que le joueur recevra après avoir joué une carte précise sur ce challenge.
                     </p>
 
                     <div class="form-group">
@@ -600,29 +600,53 @@
                     </div>
 
                     <div id="reward-card-config" style="display: none;">
+                        <div class="form-group" style="background: #2a2a2a; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                            <label style="font-weight: bold; color: #ffd700;">🎯 Condition d'obtention</label>
+                            <p style="font-size: 10px; color: #aaa; margin: 5px 0;">Quelle carte jouée déclenche l'obtention de cette récompense ?</p>
+                            <select id="reward-trigger-card" style="width: 100%; padding: 5px;">
+                                <option value="success_triumph">✨ Réussite triomphale</option>
+                                <option value="success_narrow">✓ Réussite de justesse</option>
+                                <option value="fail_narrow">⚠️ Échec de justesse</option>
+                                <option value="fail_catastrophic">💀 Échec catastrophique</option>
+                                <option value="any_success">🌟 N'importe quelle réussite</option>
+                                <option value="any">⭐ N'importe quelle carte</option>
+                            </select>
+                        </div>
+
                         <div class="form-group">
                             <label>Nom de la carte</label>
-                            <input type="text" id="reward-name" placeholder="Coup du gobelin">
+                            <input type="text" id="reward-name" placeholder="Casque d'Hermès">
                         </div>
 
                         <div class="form-group">
                             <label>Label affiché</label>
-                            <input type="text" id="reward-label" placeholder="Attaque spéciale">
+                            <input type="text" id="reward-label" placeholder="Grâce divine">
                         </div>
 
                         <div class="form-group">
                             <label>Description de l'effet</label>
-                            <textarea id="reward-description" rows="2" placeholder="Une attaque rapide apprise du gobelin..."></textarea>
+                            <textarea id="reward-description" rows="2" placeholder="Permet de jouer un succès sans faire augmenter la jauge de catastrophe..."></textarea>
                         </div>
 
                         <div class="form-group">
                             <label>Icône</label>
-                            <input type="text" id="reward-icon" value="⚔️" maxlength="2" placeholder="⚔️">
+                            <input type="text" id="reward-icon" value="🎁" maxlength="2" placeholder="🎁">
+                        </div>
+
+                        <div class="form-group" style="background: #2a2a2a; padding: 10px; border-radius: 5px;">
+                            <label style="font-weight: bold; color: #4CAF50;">✨ Effet spécial de la carte</label>
+                            <p style="font-size: 10px; color: #aaa; margin: 5px 0;">Sélectionnez le type d'effet de cette carte bonus</p>
+                            <select id="reward-special-effect" style="width: 100%; padding: 5px; margin-bottom: 10px;">
+                                <option value="none">Aucun effet spécial</option>
+                                <option value="skip_catastrophe">🛡️ Succès sans augmenter la catastrophe</option>
+                                <option value="heal">❤️ Récupération de points de vie</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
                             <label>Coût en catastrophe</label>
-                            <input type="number" id="reward-cost" value="1" min="0" max="3">
+                            <input type="number" id="reward-cost" value="0" min="0" max="3">
+                            <p style="font-size: 10px; color: #aaa; margin: 5px 0;">Note: Si effet "Succès sans catastrophe" est activé, le coût sera ignoré</p>
                         </div>
 
                         <div class="form-group">
@@ -636,12 +660,13 @@
 
                         <div class="form-group">
                             <label>Texte de l'outcome</label>
-                            <textarea id="reward-outcome-text" rows="2" placeholder="Vous utilisez la technique du gobelin..."></textarea>
+                            <textarea id="reward-outcome-text" rows="2" placeholder="Vous utilisez le pouvoir du casque d'Hermès..."></textarea>
                         </div>
 
                         <div class="form-group">
                             <label>❤️ Changement de PV</label>
                             <input type="number" id="reward-health" value="0" min="-10" max="10" title="Négatif = perte, Positif = gain">
+                            <p style="font-size: 10px; color: #aaa; margin: 5px 0;">Note: Si effet "Récupération" est activé, cette valeur doit être positive</p>
                         </div>
 
                         <div class="form-group">
@@ -969,11 +994,13 @@
             document.getElementById('reward-card-config').style.display = rewardEnabled ? 'block' : 'none';
 
             if (rewardEnabled && node.rewardCard) {
+                document.getElementById('reward-trigger-card').value = node.rewardCard.triggerCard || 'success_triumph';
                 document.getElementById('reward-name').value = node.rewardCard.name || '';
                 document.getElementById('reward-label').value = node.rewardCard.label || '';
                 document.getElementById('reward-description').value = node.rewardCard.description || '';
-                document.getElementById('reward-icon').value = node.rewardCard.icon || '⚔️';
-                document.getElementById('reward-cost').value = node.rewardCard.cost || 1;
+                document.getElementById('reward-icon').value = node.rewardCard.icon || '🎁';
+                document.getElementById('reward-special-effect').value = node.rewardCard.specialEffect || 'none';
+                document.getElementById('reward-cost').value = node.rewardCard.cost || 0;
                 document.getElementById('reward-outcome-type').value = node.rewardCard.outcomeType || 'success';
                 document.getElementById('reward-outcome-text').value = node.rewardCard.outcomeText || '';
                 document.getElementById('reward-health').value = node.rewardCard.healthChange || 0;
@@ -1040,10 +1067,12 @@
             const rewardEnabled = document.getElementById('reward-enabled').checked;
             if (rewardEnabled) {
                 selectedNode.rewardCard = {
+                    triggerCard: document.getElementById('reward-trigger-card').value,
                     name: document.getElementById('reward-name').value,
                     label: document.getElementById('reward-label').value,
                     description: document.getElementById('reward-description').value,
                     icon: document.getElementById('reward-icon').value,
+                    specialEffect: document.getElementById('reward-special-effect').value,
                     cost: parseInt(document.getElementById('reward-cost').value),
                     outcomeType: document.getElementById('reward-outcome-type').value,
                     outcomeText: document.getElementById('reward-outcome-text').value,

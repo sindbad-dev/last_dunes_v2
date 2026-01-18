@@ -143,7 +143,19 @@
             "healthChange": -2
           }
         },
-        "rewardCard": null
+        "rewardCard": {
+          "triggerCard": "success_triumph",
+          "name": "Casque d'Hermès",
+          "label": "Grâce divine",
+          "description": "Permet de jouer un succès sans faire augmenter la jauge de catastrophe",
+          "icon": "🪶",
+          "specialEffect": "skip_catastrophe",
+          "cost": 0,
+          "outcomeType": "success",
+          "outcomeText": "Vous invoquez la grâce d'Hermès ! Votre action réussit sans provoquer le destin.",
+          "healthChange": 0,
+          "uses": 2
+        }
       },
       {
         "id": "node_1",
@@ -181,7 +193,19 @@
             "healthChange": -2
           }
         },
-        "rewardCard": null
+        "rewardCard": {
+          "triggerCard": "success_narrow",
+          "name": "Potion de soin",
+          "label": "Élixir de vie",
+          "description": "Récupère 1 point de vie",
+          "icon": "🧪",
+          "specialEffect": "heal",
+          "cost": 0,
+          "outcomeType": "special",
+          "outcomeText": "Vous buvez la potion trouvée sur le gardien. Vous sentez vos forces revenir !",
+          "healthChange": 1,
+          "uses": 1
+        }
       }
     ],
     "connections": [

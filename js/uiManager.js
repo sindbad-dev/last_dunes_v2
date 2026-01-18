@@ -388,6 +388,11 @@ class UIManager {
 
         // Resolve through game logic
         this.gameLogic.resolveCard(cardType, this.currentChallenge, cardDef);
+
+        // Mettre à jour l'affichage des cartes récompense si c'était une carte récompense
+        if (cardDef.isReward && cardDef.id) {
+            this.updateDeckAfterCardUsed(cardDef.id);
+        }
     }
 
     showResult(narrativeText, onContinue) {
@@ -536,5 +541,231 @@ class UIManager {
 
         // Show Yggdrasil screen
         this.yggdrasilScreen.classList.remove('hidden');
+    }
+
+    addRewardCardToDeck(rewardCard) {
+        const card = document.createElement('div');
+        card.className = 'card reward-card';
+        card.dataset.cardId = rewardCard.id;
+        card.dataset.isReward = 'true';
+
+        // Badge "BONUS" pour les cartes récompense
+        const badge = document.createElement('div');
+        badge.className = 'reward-badge';
+        badge.textContent = '🎁 BONUS';
+        badge.style.cssText = 'position: absolute; top: -5px; right: -5px; background: linear-gradient(135deg, #ffd700, #ff6b00); color: #000; padding: 2px 6px; border-radius: 8px; font-size: 9px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);';
+        card.appendChild(badge);
+
+        // Card icon
+        const icon = document.createElement('div');
+        icon.className = 'card-icon';
+        icon.textContent = rewardCard.icon;
+        icon.style.fontSize = '32px';
+        card.appendChild(icon);
+
+        // Card title
+        const title = document.createElement('h3');
+        title.textContent = rewardCard.label;
+        title.style.fontSize = '13px';
+        card.appendChild(title);
+
+        // Description
+        const description = document.createElement('p');
+        description.textContent = rewardCard.description;
+        description.style.fontSize = '10px';
+        description.style.color = '#aaa';
+        description.style.margin = '5px 0';
+        card.appendChild(description);
+
+        // Effet spécial
+        if (rewardCard.specialEffect && rewardCard.specialEffect !== 'none') {
+            const effectBadge = document.createElement('div');
+            effectBadge.style.cssText = 'background: #2a2a2a; padding: 4px; border-radius: 4px; margin: 5px 0; font-size: 10px;';
+            if (rewardCard.specialEffect === 'skip_catastrophe') {
+                effectBadge.textContent = '🛡️ Sans catastrophe';
+                effectBadge.style.color = '#4CAF50';
+            } else if (rewardCard.specialEffect === 'heal') {
+                effectBadge.textContent = `❤️ Soigne ${rewardCard.healthChange > 0 ? '+' + rewardCard.healthChange : rewardCard.healthChange}`;
+                effectBadge.style.color = '#ff4444';
+            }
+            card.appendChild(effectBadge);
+        }
+
+        // Card cost
+        const cost = document.createElement('p');
+        if (rewardCard.specialEffect === 'skip_catastrophe') {
+            cost.textContent = 'Aucun coût';
+            cost.style.color = '#4CAF50';
+        } else if (rewardCard.catastropheCost > 0) {
+            cost.textContent = `Catastrophe: +${rewardCard.catastropheCost}`;
+            cost.style.color = '#cc0000';
+        } else {
+            cost.textContent = 'Aucun coût';
+            cost.style.color = '#666';
+        }
+        cost.style.fontSize = '11px';
+        card.appendChild(cost);
+
+        // Utilisations restantes
+        const usesDisplay = document.createElement('div');
+        usesDisplay.className = 'uses-display';
+        usesDisplay.style.cssText = 'margin-top: 5px; font-size: 11px; font-weight: bold; color: #ffd700;';
+        usesDisplay.textContent = `Utilisations: ${rewardCard.remainingUses}/${rewardCard.uses}`;
+        card.appendChild(usesDisplay);
+
+        // Click handler
+        card.addEventListener('click', () => {
+            if (!card.classList.contains('disabled') && !this.persistentDeck.classList.contains('disabled')) {
+                this.onCardSelected('reward_' + rewardCard.id, rewardCard);
+            }
+        });
+
+        // Style pour carte récompense
+        card.style.border = '2px solid #ffd700';
+        card.style.background = 'linear-gradient(135deg, #1a1a1a, #2a1a1a)';
+        card.style.position = 'relative';
+
+        this.persistentCardsArea.appendChild(card);
+    }
+
+    showRewardObtained(rewardCard, callback) {
+        // Créer un overlay pour afficher la carte obtenue
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);
+            animation: bounceIn 0.5s ease-out;
+        `;
+
+        const title = document.createElement('h2');
+        title.textContent = '🎁 CARTE BONUS OBTENUE !';
+        title.style.cssText = 'color: #ffd700; font-size: 28px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);';
+        content.appendChild(title);
+
+        const cardIcon = document.createElement('div');
+        cardIcon.textContent = rewardCard.icon;
+        cardIcon.style.cssText = 'font-size: 64px; margin: 20px 0;';
+        content.appendChild(cardIcon);
+
+        const cardName = document.createElement('h3');
+        cardName.textContent = rewardCard.label;
+        cardName.style.cssText = 'color: #fff; font-size: 24px; margin-bottom: 15px;';
+        content.appendChild(cardName);
+
+        const cardDescription = document.createElement('p');
+        cardDescription.textContent = rewardCard.description;
+        cardDescription.style.cssText = 'color: #aaa; font-size: 16px; margin-bottom: 20px; line-height: 1.5;';
+        content.appendChild(cardDescription);
+
+        const effectsBox = document.createElement('div');
+        effectsBox.style.cssText = 'background: #1a1a1a; padding: 15px; border-radius: 8px; margin: 20px 0;';
+
+        if (rewardCard.specialEffect === 'skip_catastrophe') {
+            const effectText = document.createElement('p');
+            effectText.innerHTML = '🛡️ <strong>Effet:</strong> Jouez un succès sans augmenter la catastrophe !';
+            effectText.style.cssText = 'color: #4CAF50; margin: 5px 0; font-size: 14px;';
+            effectsBox.appendChild(effectText);
+        }
+
+        if (rewardCard.specialEffect === 'heal' || rewardCard.healthChange > 0) {
+            const healText = document.createElement('p');
+            healText.innerHTML = `❤️ <strong>Soins:</strong> +${rewardCard.healthChange} points de vie`;
+            healText.style.cssText = 'color: #ff4444; margin: 5px 0; font-size: 14px;';
+            effectsBox.appendChild(healText);
+        }
+
+        const usesText = document.createElement('p');
+        usesText.innerHTML = `<strong>Utilisations:</strong> ${rewardCard.uses}×`;
+        usesText.style.cssText = 'color: #ffd700; margin: 5px 0; font-size: 14px;';
+        effectsBox.appendChild(usesText);
+
+        content.appendChild(effectsBox);
+
+        const button = document.createElement('button');
+        button.textContent = 'Continuer';
+        button.style.cssText = `
+            background: linear-gradient(135deg, #ffd700, #ff6b00);
+            color: #000;
+            border: none;
+            padding: 12px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            transition: transform 0.2s;
+        `;
+        button.onmouseover = () => button.style.transform = 'scale(1.05)';
+        button.onmouseout = () => button.style.transform = 'scale(1)';
+        button.onclick = () => {
+            document.body.removeChild(overlay);
+            if (callback) callback();
+        };
+        content.appendChild(button);
+
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+
+        // Ajouter les animations CSS si elles n'existent pas
+        if (!document.getElementById('reward-animations')) {
+            const style = document.createElement('style');
+            style.id = 'reward-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes bounceIn {
+                    0% { transform: scale(0.3); opacity: 0; }
+                    50% { transform: scale(1.05); }
+                    70% { transform: scale(0.9); }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    updateDeckAfterCardUsed(cardId) {
+        const cardElement = this.persistentCardsArea.querySelector(`[data-card-id="${cardId}"]`);
+        if (cardElement) {
+            const rewardCard = this.gameLogic.rewardCards.find(c => c.id === cardId);
+            if (rewardCard) {
+                const usesDisplay = cardElement.querySelector('.uses-display');
+                if (usesDisplay) {
+                    usesDisplay.textContent = `Utilisations: ${rewardCard.remainingUses}/${rewardCard.uses}`;
+                }
+
+                // Supprimer la carte si plus d'utilisations
+                if (rewardCard.remainingUses <= 0) {
+                    cardElement.style.animation = 'fadeOut 0.5s ease-out';
+                    setTimeout(() => {
+                        cardElement.remove();
+                    }, 500);
+                }
+            }
+        }
     }
 }

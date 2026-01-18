@@ -673,3 +673,33 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     padding: 40px 20px;
     font-style: italic;
 }
+
+/* Cartes Récompense */
+.reward-card {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.reward-card:hover {
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.6) !important;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.7);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
