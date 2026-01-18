@@ -27,6 +27,7 @@ class UIManager {
         this.cardDefinitions = {};
         this.currentChallenge = null;
         this.gameLogic = null;
+        this.optionalCards = []; // Stockage des cartes optionnelles actives
 
         // Setup history button handlers
         this.setupHistoryHandlers();
@@ -253,6 +254,110 @@ class UIManager {
         });
     }
 
+    addOptionalCard(rewardCard) {
+        // Vérifier si la carte existe déjà
+        const existingCard = this.optionalCards.find(c => c.name === rewardCard.name);
+        if (existingCard) {
+            return; // Ne pas ajouter si déjà présente
+        }
+
+        // Ajouter à la liste des cartes optionnelles
+        this.optionalCards.push({...rewardCard});
+
+        // Créer l'élément visuel de la carte
+        const card = document.createElement('div');
+        card.className = 'card optional-card';
+        card.dataset.cardType = 'optional_' + rewardCard.name;
+        card.dataset.optionalName = rewardCard.name;
+
+        // Card icon
+        const icon = document.createElement('div');
+        icon.className = 'card-icon';
+        icon.textContent = rewardCard.icon || '🎁';
+        card.appendChild(icon);
+
+        // Card title
+        const title = document.createElement('h3');
+        title.textContent = rewardCard.label;
+        card.appendChild(title);
+
+        // Card description
+        const description = document.createElement('p');
+        description.className = 'card-description';
+        description.textContent = rewardCard.description;
+        description.style.fontSize = '0.85em';
+        description.style.color = '#ccc';
+        description.style.marginBottom = '5px';
+        card.appendChild(description);
+
+        // Card cost
+        const cost = document.createElement('p');
+        if (rewardCard.cost > 0) {
+            cost.textContent = `Catastrophe: +${rewardCard.cost}`;
+            cost.style.color = '#cc0000';
+        } else {
+            cost.textContent = 'Aucun coût';
+            cost.style.color = '#666';
+        }
+        card.appendChild(cost);
+
+        // Uses counter
+        const uses = document.createElement('div');
+        uses.className = 'card-uses';
+        uses.textContent = `Utilisations: ${rewardCard.uses}`;
+        uses.style.fontSize = '0.85em';
+        uses.style.color = '#ffeb3b';
+        uses.style.marginTop = '5px';
+        uses.style.fontWeight = 'bold';
+        card.appendChild(uses);
+
+        // Style spécial pour les cartes optionnelles
+        card.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        card.style.border = '2px solid #ffeb3b';
+
+        // Click handler
+        card.addEventListener('click', () => {
+            if (!card.classList.contains('disabled') && !this.persistentDeck.classList.contains('disabled')) {
+                this.onOptionalCardSelected(rewardCard);
+            }
+        });
+
+        // Ajouter au deck
+        this.persistentCardsArea.appendChild(card);
+    }
+
+    removeOptionalCard(cardName) {
+        // Retirer de la liste
+        this.optionalCards = this.optionalCards.filter(c => c.name !== cardName);
+
+        // Retirer du DOM
+        const cardElement = this.persistentCardsArea.querySelector(`[data-optional-name="${cardName}"]`);
+        if (cardElement) {
+            cardElement.remove();
+        }
+    }
+
+    decrementOptionalCardUse(cardName) {
+        const card = this.optionalCards.find(c => c.name === cardName);
+        if (!card) return;
+
+        card.uses--;
+
+        // Mettre à jour l'affichage
+        const cardElement = this.persistentCardsArea.querySelector(`[data-optional-name="${cardName}"]`);
+        if (cardElement) {
+            const usesElement = cardElement.querySelector('.card-uses');
+            if (usesElement) {
+                usesElement.textContent = `Utilisations: ${card.uses}`;
+            }
+
+            // Retirer la carte si plus d'utilisations
+            if (card.uses <= 0) {
+                this.removeOptionalCard(cardName);
+            }
+        }
+    }
+
     updateHealthBar(currentHealth, maxHealth) {
         // Clear existing hearts
         this.healthBar.innerHTML = '';
@@ -312,6 +417,11 @@ class UIManager {
         // Show dialogue
         this.dialogueText.textContent = challengeData.dialogue_preview;
 
+        // Add optional card to deck if present
+        if (challengeData.rewardCard) {
+            this.addOptionalCard(challengeData.rewardCard);
+        }
+
         // Generate cards in overlay (for results preview)
         this.renderCards(challengeData, gameLogic);
 
@@ -363,6 +473,27 @@ class UIManager {
             resultsList.appendChild(resultItem);
         }
 
+        // Add optional card preview if present
+        if (challengeData.rewardCard) {
+            const rewardCard = challengeData.rewardCard;
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item result-optional';
+            resultItem.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)';
+            resultItem.style.border = '2px solid #ffeb3b';
+
+            const resultLabel = document.createElement('div');
+            resultLabel.className = 'result-label';
+            resultLabel.innerHTML = `${rewardCard.icon || '🎁'} <strong>${rewardCard.label}</strong> <span style="color: #ffeb3b;">(Carte optionnelle - ${rewardCard.uses} utilisation${rewardCard.uses > 1 ? 's' : ''})</span>`;
+
+            const resultText = document.createElement('div');
+            resultText.className = 'result-text-preview';
+            resultText.textContent = rewardCard.outcomeText;
+
+            resultItem.appendChild(resultLabel);
+            resultItem.appendChild(resultText);
+            resultsList.appendChild(resultItem);
+        }
+
         resultsPreview.appendChild(resultsList);
         this.cardsArea.appendChild(resultsPreview);
 
@@ -388,6 +519,26 @@ class UIManager {
 
         // Resolve through game logic
         this.gameLogic.resolveCard(cardType, this.currentChallenge, cardDef);
+    }
+
+    onOptionalCardSelected(rewardCard) {
+        // Disable deck
+        this.disableDeck();
+
+        // Hide overlay
+        this.overlay.classList.add('hidden');
+
+        // Décrémenter les utilisations
+        this.decrementOptionalCardUse(rewardCard.name);
+
+        // Créer un objet cardDef compatible avec la logique existante
+        const cardDef = {
+            label: rewardCard.label,
+            catastropheCost: rewardCard.cost
+        };
+
+        // Résoudre via game logic avec le type spécifique de la carte
+        this.gameLogic.resolveOptionalCard(rewardCard, this.currentChallenge);
     }
 
     showResult(narrativeText, onContinue) {

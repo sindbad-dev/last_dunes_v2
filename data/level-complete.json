@@ -143,7 +143,17 @@
             "healthChange": -2
           }
         },
-        "rewardCard": null
+        "rewardCard": {
+          "name": "coup_gobelin",
+          "label": "Attaque du Gobelin",
+          "description": "Une attaque rapide et vicieuse apprise du gobelin",
+          "icon": "🗡️",
+          "cost": 1,
+          "outcomeType": "success",
+          "outcomeText": "Vous utilisez l'attaque du gobelin avec précision ! Le coup rapide surprend votre adversaire.",
+          "healthChange": 0,
+          "uses": 2
+        }
       },
       {
         "id": "node_1",
