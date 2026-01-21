@@ -41,13 +41,13 @@
         log('#file-check', '✓ test.html chargé', 'success');
 
         // Test 2: Chargement du JSON
-        fetch('data/level1.json')
+        fetch('data/level-complete.json')
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                log('#file-check', '✓ data/level1.json chargé', 'success');
+                log('#file-check', '✓ data/level-complete.json chargé', 'success');
                 document.getElementById('json-data').textContent = JSON.stringify(data, null, 2);
             })
             .catch(error => {

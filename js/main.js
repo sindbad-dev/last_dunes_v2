@@ -155,23 +155,44 @@ async function main() {
         const response = await fetch('data/level-complete.json');
 
         if (!response.ok) {
-            throw new Error(`Impossible de charger level-complete.json: HTTP ${response.status}`);
+            if (response.status === 404) {
+                throw new Error('❌ FICHIER ABSENT: Le fichier data/level-complete.json est introuvable.\n\nVeuillez créer ce fichier avec l\'éditeur de niveau ou placer un fichier level-complete.json valide dans le dossier data/');
+            }
+            throw new Error(`❌ ERREUR HTTP ${response.status}: Impossible de charger level-complete.json`);
         }
 
-        const levelData = await response.json();
-        console.log('✅ Fichier chargé: level-complete.json');
+        let levelData;
+        try {
+            levelData = await response.json();
+        } catch (jsonError) {
+            throw new Error('❌ FICHIER MAL FORMATTÉ: Le fichier level-complete.json contient du JSON invalide.\n\nVérifiez la syntaxe avec un validateur JSON (JSONLint).');
+        }
 
+        // Vérifier que le fichier n'est pas vide
+        if (!levelData || Object.keys(levelData).length === 0) {
+            throw new Error('❌ FICHIER VIDE: Le fichier level-complete.json est vide ou ne contient aucune donnée.\n\nUtilisez l\'éditeur de niveau pour créer un niveau valide.');
+        }
+
+        // Vérifier la structure minimale requise
+        if (!levelData.mechanics) {
+            throw new Error('❌ STRUCTURE INVALIDE: Le fichier level-complete.json doit contenir une section "mechanics".\n\nFormat requis: { "mechanics": { "cards": {...}, "catastropheMax": 3, "healthMax": 3 }, ... }');
+        }
+
+        if (!levelData.mechanics.cards) {
+            throw new Error('❌ CARTES MANQUANTES: La section "mechanics" doit contenir les définitions de cartes.\n\nFormat requis: "mechanics": { "cards": { "success_triumph": {...}, ... } }');
+        }
+
+        console.log('✅ Fichier chargé: level-complete.json');
         await initializeGame(levelData);
 
     } catch (error) {
         console.error('❌ Erreur lors du chargement:', error);
 
         // Message d'erreur détaillé pour l'utilisateur
-        let errorMessage = 'Erreur: ' + error.message;
+        let errorMessage = error.message;
 
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage += '\n\nAssurez-vous d\'ouvrir le fichier via un serveur web (pas en file://)';
-            errorMessage += '\n\nUtilisez: python -m http.server ou npx http-server';
+            errorMessage = '❌ ERREUR RÉSEAU: Impossible de charger le fichier.\n\nAssurez-vous d\'ouvrir le jeu via un serveur web (pas en file://).\n\nUtilisez:\n• python -m http.server\n• npx http-server\n• php -S localhost:8000';
         }
 
         alert(errorMessage);
