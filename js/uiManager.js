@@ -500,11 +500,6 @@ class UIManager {
         // Afficher le dialogue
         this.dialogueText.textContent = challengeData.dialogue_preview;
 
-        // Ajouter la carte optionnelle au deck si présente
-        if (challengeData.rewardCard) {
-            this.addOptionalCard(challengeData.rewardCard);
-        }
-
         // Générer l'aperçu des résultats
         this.renderCards(challengeData, gameLogic);
 
