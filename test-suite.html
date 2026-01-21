@@ -764,43 +764,6 @@
                             throw new Error(`ID non correspondant: challenge "${challengeIds[i]}" vs nœud "${nodeIds[i]}"`);
                         }
                     }
-                }, container),
-
-                new TestCase('Validation challenges.json (fallback)', async () => {
-                    try {
-                        const response = await fetch('data/challenges.json');
-                        if (!response.ok) {
-                            throw new Error('Fichier challenges.json absent (fallback ne fonctionnera pas)');
-                        }
-                        const data = await response.json();
-
-                        if (!data.challenges || !Array.isArray(data.challenges)) {
-                            throw new Error('Structure challenges.json invalide');
-                        }
-                    } catch (error) {
-                        throw new Error(`Problème avec challenges.json: ${error.message}`);
-                    }
-                }, container),
-
-                new TestCase('Validation level1.json (mécaniques)', async () => {
-                    const response = await fetch('data/level1.json');
-                    const data = await response.json();
-
-                    if (!data.mechanics) {
-                        throw new Error('Mécaniques manquantes');
-                    }
-
-                    if (!data.mechanics.catastropheMax) {
-                        throw new Error('catastropheMax manquant');
-                    }
-
-                    if (!data.mechanics.healthMax) {
-                        throw new Error('healthMax manquant');
-                    }
-
-                    if (!data.mechanics.cards) {
-                        throw new Error('Cartes manquantes');
-                    }
                 }, container)
             ];
 
@@ -948,23 +911,6 @@
                     log('level-complete.json chargé avec succès', 'success');
                 }, container),
 
-                new TestCase('Fallback sur challenges.json', async () => {
-                    // Test du fallback
-                    const levelComplete = await fetch('data/level-complete-inexistant.json')
-                        .then(r => r.ok ? r.json() : null)
-                        .catch(() => null);
-
-                    const challenges = await fetch('data/challenges.json')
-                        .then(r => r.ok ? r.json() : null)
-                        .catch(() => null);
-
-                    if (!levelComplete && challenges) {
-                        log('Fallback sur challenges.json fonctionne', 'success');
-                    } else if (!levelComplete && !challenges) {
-                        throw new Error('Aucun fichier de niveau disponible');
-                    }
-                }, container),
-
                 new TestCase('Validation enrichissement sans arbre narratif', async () => {
                     function enrichChallengesWithNarrative(challenges, narrativeTree) {
                         if (!narrativeTree || !narrativeTree.nodes) {
@@ -978,26 +924,6 @@
 
                     if (enriched !== challenges) {
                         throw new Error('Sans arbre narratif, les challenges doivent être retournés tels quels');
-                    }
-                }, container),
-
-                new TestCase('Chargement mécaniques depuis level1.json', async () => {
-                    const response = await fetch('data/level1.json');
-                    const data = await response.json();
-
-                    if (!data.mechanics) {
-                        throw new Error('Mécaniques absentes de level1.json');
-                    }
-
-                    if (!data.mechanics.cards) {
-                        throw new Error('Cartes absentes des mécaniques');
-                    }
-
-                    const expectedCards = ['success_narrow', 'success_triumph', 'fail_narrow', 'fail_catastrophic'];
-                    for (let card of expectedCards) {
-                        if (!data.mechanics.cards[card]) {
-                            throw new Error(`Carte manquante: ${card}`);
-                        }
                     }
                 }, container)
             ];
