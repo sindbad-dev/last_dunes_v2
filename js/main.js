@@ -1,15 +1,24 @@
-console.log("Last Dunes - Initialisation...");
+/**
+ * Point d'entrée de l'application Last Dunes
+ * Initialise les systèmes de jeu et charge les données du niveau
+ */
 
+console.log('Last Dunes - Initialisation...');
+
+// Initialisation des gestionnaires principaux
 const ui = new UIManager();
 const logic = new GameLogic(ui);
-const engine = new MapEngine("gameCanvas");
+const engine = new MapEngine('gameCanvas');
 
 /**
  * Enrichit les challenges avec les données de l'arbre narratif
+ * @param {Array} challenges - Liste des challenges de base
+ * @param {Object} narrativeTree - Arbre narratif avec les nœuds
+ * @returns {Array} Challenges enrichis
  */
 function enrichChallengesWithNarrative(challenges, narrativeTree) {
     if (!narrativeTree || !narrativeTree.nodes) {
-        console.warn("⚠️ Pas d'arbre narratif fourni, utilisation des challenges bruts");
+        console.warn('⚠️ Pas d\'arbre narratif fourni, utilisation des challenges bruts');
         return challenges;
     }
 
@@ -64,25 +73,19 @@ function enrichChallengesWithNarrative(challenges, narrativeTree) {
     });
 }
 
-// Chargement des données depuis level-complete.json uniquement
-fetch('data/level-complete.json')
-.then(response => {
-    if (!response.ok) {
-        throw new Error(`Impossible de charger level-complete.json: ${response.status}`);
-    }
-    return response.json();
-})
-.then(levelData => {
-    console.log("✅ Fichier chargé: level-complete.json");
-
-    // Vérifier que les données essentielles sont présentes
+/**
+ * Initialise le jeu avec les données du niveau
+ * @param {Object} levelData - Données complètes du niveau
+ */
+async function initializeGame(levelData) {
+    // Validation des données essentielles
     if (!levelData.mechanics || !levelData.mechanics.cards) {
-        throw new Error("Le fichier level-complete.json doit contenir une section 'mechanics' avec les définitions de cartes");
+        throw new Error('Le fichier level-complete.json doit contenir une section "mechanics" avec les définitions de cartes');
     }
 
-    // Configurer le niveau
+    // Configuration du niveau
     const levelInfo = {
-        name: levelData.name || "Niveau Personnalisé",
+        name: levelData.name || 'Niveau Personnalisé',
         mapFile: levelData.mapFile,
         gridSize: levelData.gridSize,
         startPos: levelData.startPos
@@ -127,7 +130,7 @@ fetch('data/level-complete.json')
     console.log(`🎮 Mécaniques initialisées: catastropheMax=${levelData.mechanics.catastropheMax}, healthMax=${levelData.mechanics.healthMax}`);
     console.log(`🎴 Deck persistant initialisé avec ${Object.keys(levelData.mechanics.cards).length} cartes`);
 
-    // Boucle de jeu
+    // Boucle de jeu - détection des collisions avec challenges
     engine.onPlayerMove((pos) => {
         const challenge = engine.checkCollision(pos);
         if (challenge && !challenge.visited) {
@@ -136,11 +139,44 @@ fetch('data/level-complete.json')
         }
     });
 
+    // Démarrer la boucle de rendu
     engine.start();
-    console.log("✅ Jeu démarré avec succès!");
+    console.log('✅ Jeu démarré avec succès!');
     console.log(`📍 Niveau: ${levelInfo.name}`);
-})
-.catch(error => {
-    console.error("❌ Erreur lors du chargement:", error);
-    alert("Erreur: " + error.message + "\n\nAssurez-vous d'ouvrir le fichier via un serveur web (pas en file://)");
-});
+}
+
+/**
+ * Point d'entrée principal - Charge et initialise le jeu
+ */
+async function main() {
+    try {
+        console.log('📦 Chargement de level-complete.json...');
+
+        const response = await fetch('data/level-complete.json');
+
+        if (!response.ok) {
+            throw new Error(`Impossible de charger level-complete.json: HTTP ${response.status}`);
+        }
+
+        const levelData = await response.json();
+        console.log('✅ Fichier chargé: level-complete.json');
+
+        await initializeGame(levelData);
+
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement:', error);
+
+        // Message d'erreur détaillé pour l'utilisateur
+        let errorMessage = 'Erreur: ' + error.message;
+
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage += '\n\nAssurez-vous d\'ouvrir le fichier via un serveur web (pas en file://)';
+            errorMessage += '\n\nUtilisez: python -m http.server ou npx http-server';
+        }
+
+        alert(errorMessage);
+    }
+}
+
+// Lancer le jeu au chargement de la page
+main();

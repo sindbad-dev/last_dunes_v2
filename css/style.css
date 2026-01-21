@@ -673,3 +673,101 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     padding: 40px 20px;
     font-style: italic;
 }
+
+/* Styles supplémentaires pour les cartes */
+.card-cost {
+    font-size: 11px;
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+.card-description {
+    font-size: 0.85em;
+    color: #ccc;
+    margin-bottom: 5px;
+    font-style: italic;
+}
+
+.card-uses {
+    font-size: 0.85em;
+    color: #ffeb3b;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* Carte optionnelle - style spécial */
+.optional-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid #ffeb3b;
+    color: #fff;
+}
+
+.optional-card h3,
+.optional-card p {
+    color: #fff;
+}
+
+/* Résultat optionnel dans l'aperçu */
+.result-item.result-optional {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border: 2px solid #ffeb3b;
+    border-left: 4px solid #ffeb3b;
+}
+
+.optional-badge {
+    color: #ffeb3b;
+    font-size: 12px;
+}
+
+/* Instruction pour utiliser le menu */
+.menu-instruction {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: #ffeb3b;
+}
+
+.menu-instruction p {
+    margin: 0;
+}
+
+/* Modal de résultat */
+.result-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    color: #000;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 500px;
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.result-modal .result-text {
+    color: #000;
+    background: none;
+    border: none;
+    margin-bottom: 20px;
+}
+
+.continue-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s;
+}
+
+.continue-button:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}

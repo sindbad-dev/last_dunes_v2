@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests Unitaires - GameLogic & Mécanique des Cartes</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ffd700;
+            text-align: center;
+        }
+        .test-suite {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-suite h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .test {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #888;
+            border-radius: 4px;
+        }
+        .test.pass {
+            border-left-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        .test.fail {
+            border-left-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .test.pass .test-name::before {
+            content: '✅ ';
+        }
+        .test.fail .test-name::before {
+            content: '❌ ';
+        }
+        .test-details {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-left: 20px;
+        }
+        .error-message {
+            color: #ff6666;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        .summary {
+            background: #2a2a2a;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .summary h2 {
+            color: #ffd700;
+            margin: 0 0 15px 0;
+        }
+        .summary .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        .stat {
+            flex: 1;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .stat-value.pass { color: #4CAF50; }
+        .stat-value.fail { color: #f44336; }
+        .stat-value.total { color: #ffd700; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests Unitaires - GameLogic & Mécanique des Cartes</h1>
+
+    <div id="summary" class="summary">
+        <h2>📊 Résumé</h2>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value pass" id="pass-count">0</div>
+                <div>Tests réussis</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value fail" id="fail-count">0</div>
+                <div>Tests échoués</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value total" id="total-count">0</div>
+                <div>Total</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="test-results"></div>
+
+    <!-- Charger les scripts nécessaires -->
+    <script src="../js/config.js"></script>
+    <script src="../js/gameLogic.js"></script>
+
+    <script>
+        // Mock simple de UIManager pour les tests
+        class MockUIManager {
+            constructor() {
+                this.updateGaugeCalledWith = null;
+                this.updateHealthBarCalledWith = null;
+                this.updateDeckStateCalled = false;
+                this.showResultCalledWith = null;
+                this.showYggdrasilCalledWith = null;
+            }
+
+            updateGauge(level) {
+                this.updateGaugeCalledWith = level;
+            }
+
+            updateHealthBar(current, max) {
+                this.updateHealthBarCalledWith = { current, max };
+            }
+
+            updateDeckState() {
+                this.updateDeckStateCalled = true;
+            }
+
+            showResult(text, callback) {
+                this.showResultCalledWith = text;
+                if (callback) callback();
+            }
+
+            showYggdrasil(history) {
+                this.showYggdrasilCalledWith = history;
+            }
+        }
+
+        // Framework de test simple
+        class TestRunner {
+            constructor() {
+                this.results = [];
+                this.currentSuite = null;
+            }
+
+            suite(name, tests) {
+                this.currentSuite = name;
+                const suiteDiv = document.createElement('div');
+                suiteDiv.className = 'test-suite';
+                suiteDiv.innerHTML = `<h2>${name}</h2>`;
+                document.getElementById('test-results').appendChild(suiteDiv);
+
+                tests();
+            }
+
+            test(name, fn) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test';
+
+                try {
+                    fn();
+                    testDiv.classList.add('pass');
+                    testDiv.innerHTML = `<div class="test-name">${name}</div>`;
+                    this.results.push({ name, passed: true });
+                } catch (error) {
+                    testDiv.classList.add('fail');
+                    testDiv.innerHTML = `
+                        <div class="test-name">${name}</div>
+                        <div class="error-message">${error.message}</div>
+                    `;
+                    this.results.push({ name, passed: false, error: error.message });
+                }
+
+                document.querySelector('.test-suite:last-child').appendChild(testDiv);
+            }
+
+            assertEqual(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || `Attendu: ${expected}, Reçu: ${actual}`);
+                }
+            }
+
+            assertTrue(condition, message) {
+                if (!condition) {
+                    throw new Error(message || 'Condition devrait être vraie');
+                }
+            }
+
+            assertFalse(condition, message) {
+                if (condition) {
+                    throw new Error(message || 'Condition devrait être fausse');
+                }
+            }
+
+            assertNotNull(value, message) {
+                if (value === null || value === undefined) {
+                    throw new Error(message || 'La valeur ne devrait pas être null');
+                }
+            }
+
+            updateSummary() {
+                const passed = this.results.filter(r => r.passed).length;
+                const failed = this.results.filter(r => !r.passed).length;
+                const total = this.results.length;
+
+                document.getElementById('pass-count').textContent = passed;
+                document.getElementById('fail-count').textContent = failed;
+                document.getElementById('total-count').textContent = total;
+            }
+        }
+
+        const runner = new TestRunner();
+
+        // ===== TESTS =====
+
+        // 1. Tests d'initialisation
+        runner.suite('1. Initialisation de GameLogic', () => {
+            runner.test('Devrait initialiser avec les valeurs par défaut', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                runner.assertEqual(logic.catastropheLevel, 0);
+                runner.assertEqual(logic.currentHealth, GAME_CONFIG.DEFAULT_HEALTH_MAX);
+                runner.assertEqual(logic.maxHealth, GAME_CONFIG.DEFAULT_HEALTH_MAX);
+                runner.assertEqual(logic.maxCatastrophe, GAME_CONFIG.DEFAULT_CATASTROPHE_MAX);
+                runner.assertTrue(Array.isArray(logic.history));
+                runner.assertEqual(logic.history.length, 0);
+            });
+
+            runner.test('Devrait initialiser avec les données du niveau', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                const levelData = {
+                    challenges: [{ id: 1 }, { id: 2 }, { id: 3 }],
+                    mechanics: {
+                        healthMax: 5,
+                        catastropheMax: 4
+                    }
+                };
+
+                logic.init(levelData);
+
+                runner.assertEqual(logic.currentHealth, 5);
+                runner.assertEqual(logic.maxHealth, 5);
+                runner.assertEqual(logic.maxCatastrophe, 4);
+                runner.assertEqual(logic.totalChallenges, 3);
+            });
+        });
+
+        // 2. Tests de résolution de cartes standard
+        runner.suite('2. Résolution de cartes standard', () => {
+            runner.test('Devrait résoudre une carte de succès sans effets', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test Challenge',
+                    icon: '🎯',
+                    type: 'challenge',
+                    outcomes: {
+                        success_triumph: 'Vous avez réussi brillamment!'
+                    },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Triomphe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+
+                runner.assertEqual(logic.history.length, 1);
+                runner.assertEqual(logic.history[0].outcomeType, 'success_triumph');
+                runner.assertEqual(logic.catastropheLevel, 0);
+            });
+
+            runner.test('Devrait augmenter la jauge de catastrophe selon le coût', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { fail_narrow: 'Échec mineur' },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Échec Étroit',
+                    catastropheCost: 2
+                };
+
+                logic.resolveCard('fail_narrow', challengeData, cardDef);
+
+                runner.assertEqual(logic.catastropheLevel, 2);
+                runner.assertEqual(ui.updateGaugeCalledWith, 2);
+            });
+
+            runner.test('Devrait appliquer les effets de santé positifs', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { success_triumph: 'Guérison!' },
+                    healthEffects: { success_triumph: 1 }
+                };
+
+                const cardDef = {
+                    label: 'Triomphe',
+                    catastropheCost: 0
+                };
+
+                const initialHealth = logic.currentHealth;
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+
+                runner.assertEqual(logic.currentHealth, initialHealth + 1);
+            });
+
+            runner.test('Devrait appliquer les effets de santé négatifs', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { fail_catastrophic: 'Blessure grave!' },
+                    healthEffects: { fail_catastrophic: -2 }
+                };
+
+                const cardDef = {
+                    label: 'Catastrophe',
+                    catastropheCost: 0
+                };
+
+                const initialHealth = logic.currentHealth;
+                logic.resolveCard('fail_catastrophic', challengeData, cardDef);
+
+                runner.assertEqual(logic.currentHealth, initialHealth - 2);
+            });
+
+            runner.test('La santé ne devrait pas dépasser le maximum', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.currentHealth = logic.maxHealth;
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { success_triumph: 'Guérison!' },
+                    healthEffects: { success_triumph: 1 }
+                };
+
+                const cardDef = {
+                    label: 'Triomphe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+
+                runner.assertEqual(logic.currentHealth, logic.maxHealth);
+            });
+
+            runner.test('La santé ne devrait pas descendre en dessous de 0', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.currentHealth = 1;
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { fail_catastrophic: 'Mort!' },
+                    healthEffects: { fail_catastrophic: -5 }
+                };
+
+                const cardDef = {
+                    label: 'Catastrophe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('fail_catastrophic', challengeData, cardDef);
+
+                runner.assertEqual(logic.currentHealth, 0);
+            });
+        });
+
+        // 3. Tests de la mécanique de catastrophe
+        runner.suite('3. Mécanique de catastrophe (jauge pleine)', () => {
+            runner.test('Devrait forcer fail_catastrophic quand la jauge est pleine', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.catastropheLevel = 3; // Pleine
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: {
+                        success_triumph: 'Réussite!',
+                        fail_catastrophic: 'Catastrophe!'
+                    },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Triomphe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+
+                runner.assertEqual(logic.history[0].outcomeType, 'fail_catastrophic');
+                runner.assertTrue(logic.history[0].wasForced);
+                runner.assertEqual(logic.catastropheLevel, 0); // Reset après catastrophe
+            });
+
+            runner.test('Le niveau de catastrophe ne devrait pas dépasser le maximum', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.catastropheLevel = 2;
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { fail_narrow: 'Échec' },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Échec',
+                    catastropheCost: 5
+                };
+
+                logic.resolveCard('fail_narrow', challengeData, cardDef);
+
+                runner.assertTrue(logic.catastropheLevel <= logic.maxCatastrophe);
+            });
+        });
+
+        // 4. Tests des cartes optionnelles
+        runner.suite('4. Résolution de cartes optionnelles', () => {
+            runner.test('Devrait résoudre une carte optionnelle correctement', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const rewardCard = {
+                    name: 'healing_potion',
+                    label: 'Potion de guérison',
+                    icon: '🧪',
+                    cost: 1,
+                    outcomeType: 'success_triumph',
+                    outcomeText: 'Vous buvez la potion et récupérez de la santé!',
+                    healthChange: 2,
+                    uses: 3
+                };
+
+                const challengeData = {
+                    name: 'Test',
+                    icon: '🎯'
+                };
+
+                const initialHealth = logic.currentHealth;
+                logic.resolveOptionalCard(rewardCard, challengeData);
+
+                runner.assertEqual(logic.currentHealth, initialHealth + 2);
+                runner.assertEqual(logic.catastropheLevel, 1);
+                runner.assertEqual(logic.history.length, 1);
+                runner.assertTrue(logic.history[0].cardType.includes('optional'));
+            });
+        });
+
+        // 5. Tests de l'historique
+        runner.suite('5. Gestion de l\'historique', () => {
+            runner.test('Devrait ajouter une entrée à l\'historique', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test Challenge',
+                    icon: '🎯',
+                    type: 'challenge',
+                    outcomes: { success_triumph: 'Réussite!' },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Triomphe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+
+                runner.assertEqual(logic.history.length, 1);
+                runner.assertEqual(logic.history[0].challengeName, 'Test Challenge');
+                runner.assertEqual(logic.history[0].challengeIcon, '🎯');
+                runner.assertEqual(logic.history[0].cardPlayed, 'Triomphe');
+            });
+
+            runner.test('L\'historique ne devrait pas dépasser MAX_HISTORY_ENTRIES', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { success_triumph: 'Ok' },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Carte',
+                    catastropheCost: 0
+                };
+
+                // Ajouter 101 entrées
+                for (let i = 0; i < VALIDATION.MAX_HISTORY_ENTRIES + 1; i++) {
+                    logic.resolveCard('success_triumph', challengeData, cardDef);
+                }
+
+                runner.assertTrue(logic.history.length <= VALIDATION.MAX_HISTORY_ENTRIES);
+            });
+        });
+
+        // 6. Tests de fin de jeu
+        runner.suite('6. Conditions de fin de jeu', () => {
+            runner.test('Devrait afficher Yggdrasil quand tous les challenges sont résolus', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.totalChallenges = 2;
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { success_triumph: 'Ok' },
+                    healthEffects: {}
+                };
+
+                const cardDef = {
+                    label: 'Carte',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+                runner.assertNotNull(ui.showResultCalledWith);
+
+                logic.resolveCard('success_triumph', challengeData, cardDef);
+                runner.assertNotNull(ui.showYggdrasilCalledWith);
+            });
+
+            runner.test('Devrait afficher Game Over quand la santé atteint 0', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+                logic.currentHealth = 1;
+
+                const challengeData = {
+                    name: 'Test',
+                    outcomes: { fail_catastrophic: 'Mort!' },
+                    healthEffects: { fail_catastrophic: -1 }
+                };
+
+                const cardDef = {
+                    label: 'Catastrophe',
+                    catastropheCost: 0
+                };
+
+                logic.resolveCard('fail_catastrophic', challengeData, cardDef);
+
+                runner.assertTrue(ui.showResultCalledWith.includes('GAME OVER'));
+            });
+        });
+
+        // 7. Tests de validation
+        runner.suite('7. Validation des paramètres', () => {
+            runner.test('Devrait gérer des paramètres invalides sans crash', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                // Ne devrait pas crasher
+                logic.resolveCard(null, null, null);
+
+                runner.assertTrue(true); // Si on arrive ici, pas de crash
+            });
+
+            runner.test('Devrait valider levelData dans init()', () => {
+                const ui = new MockUIManager();
+                const logic = new GameLogic(ui);
+
+                // Ne devrait pas crasher avec des données invalides
+                logic.init(null);
+                logic.init({});
+                logic.init({ challenges: [] });
+
+                runner.assertTrue(true);
+            });
+        });
+
+        // Mettre à jour le résumé
+        runner.updateSummary();
+
+        console.log('Tests terminés!');
+        console.log(`Réussis: ${runner.results.filter(r => r.passed).length}`);
+        console.log(`Échoués: ${runner.results.filter(r => !r.passed).length}`);
+    </script>
+</body>
+</html>
