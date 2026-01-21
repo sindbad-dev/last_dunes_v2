@@ -102,6 +102,13 @@ class GameLogic {
         this.ui.updateHealthBar(this.currentHealth, this.maxHealth);
         this.ui.updateDeckState();
 
+        // Ajouter la carte récompense au deck si c'est un succès et qu'il y en a une
+        // IMPORTANT : Ne s'applique QUE pour les cartes standards, pas pour les cartes optionnelles
+        if (!isOptional && challengeData.rewardCard && (actualOutcome === 'success_triumph' || actualOutcome === 'success_narrow')) {
+            console.log(`✨ Carte récompense débloquée: ${challengeData.rewardCard.label}`);
+            this.ui.addOptionalCard(challengeData.rewardCard);
+        }
+
         // Vérifier Game Over ou continuer
         this._handleOutcome(narrativeResult);
     }
