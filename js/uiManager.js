@@ -551,26 +551,8 @@ class UIManager {
             resultsList.appendChild(resultItem);
         }
 
-        // Ajouter l'aperçu de la carte optionnelle si présente
-        if (challengeData.rewardCard) {
-            const rewardCard = challengeData.rewardCard;
-            const resultItem = document.createElement('div');
-            resultItem.className = 'result-item result-optional';
-
-            const resultLabel = document.createElement('div');
-            resultLabel.className = 'result-label';
-            const icon = rewardCard.icon || CARD_CONFIG.OPTIONAL.ICON_DEFAULT;
-            const usesText = rewardCard.uses > 1 ? 's' : '';
-            resultLabel.innerHTML = `${icon} <strong>${rewardCard.label}</strong> <span class="optional-badge">${UI_TEXT.OPTIONAL_CARD_SUFFIX} - ${rewardCard.uses} utilisation${usesText})</span>`;
-
-            const resultText = document.createElement('div');
-            resultText.className = 'result-text-preview';
-            resultText.textContent = rewardCard.outcomeText;
-
-            resultItem.appendChild(resultLabel);
-            resultItem.appendChild(resultText);
-            resultsList.appendChild(resultItem);
-        }
+        // La carte récompense n'est pas affichée dans l'aperçu
+        // Elle sera ajoutée au deck après résolution du challenge
 
         resultsPreview.appendChild(resultsList);
         this.cardsArea.appendChild(resultsPreview);
