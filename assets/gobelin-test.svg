@@ -1,0 +1,16 @@
+<svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrière-plan -->
+  <rect width="400" height="250" fill="#2a1a3a"/>
+
+  <!-- Cercle décoratif -->
+  <circle cx="200" cy="125" r="80" fill="#4a2a5a" opacity="0.5"/>
+
+  <!-- Gobelin (emoji style) -->
+  <text x="200" y="150" font-size="80" text-anchor="middle" fill="#00ff00">👺</text>
+
+  <!-- Titre -->
+  <text x="200" y="220" font-size="24" text-anchor="middle" fill="#ffd700" font-family="Arial, sans-serif" font-weight="bold">Le Gobelin</text>
+
+  <!-- Bordure décorative -->
+  <rect x="10" y="10" width="380" height="230" fill="none" stroke="#ffd700" stroke-width="2" rx="10"/>
+</svg>

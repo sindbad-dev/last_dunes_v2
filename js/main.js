@@ -42,6 +42,7 @@ function enrichChallengesWithNarrative(challenges, narrativeTree) {
             color: node.color || challenge.color,
             description: node.dialogue || challenge.description,
             dialogue_preview: node.dialogue || challenge.dialogue_preview,
+            image: node.image || challenge.image,
             isStart: node.isStart || false,
             rewardCard: node.rewardCard || null
         };
