@@ -541,6 +541,14 @@
                     </div>
 
                     <div class="form-group">
+                        <label>URL de l'image (optionnel)</label>
+                        <input type="text" id="edit-image" placeholder="https://example.com/image.jpg">
+                        <small style="color: #888; font-size: 10px; display: block; margin-top: 4px;">
+                            L'image sera affichée sous la description du challenge
+                        </small>
+                    </div>
+
+                    <div class="form-group">
                         <label><input type="checkbox" id="edit-is-start"> Nœud de départ</label>
                     </div>
                 </div>
@@ -942,6 +950,7 @@
             document.getElementById('edit-icon').value = node.icon;
             document.getElementById('edit-color').value = node.color;
             document.getElementById('edit-dialogue').value = node.dialogue || '';
+            document.getElementById('edit-image').value = node.image || '';
             document.getElementById('edit-is-start').checked = node.isStart || false;
 
             // Update outcomes
@@ -998,6 +1007,7 @@
             selectedNode.icon = document.getElementById('edit-icon').value;
             selectedNode.color = document.getElementById('edit-color').value;
             selectedNode.dialogue = document.getElementById('edit-dialogue').value;
+            selectedNode.image = document.getElementById('edit-image').value || undefined;
 
             const wasStart = selectedNode.isStart;
             selectedNode.isStart = document.getElementById('edit-is-start').checked;
