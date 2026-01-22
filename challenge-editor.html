@@ -541,10 +541,21 @@
                     </div>
 
                     <div class="form-group">
-                        <label>URL de l'image (optionnel)</label>
-                        <input type="text" id="edit-image" placeholder="https://example.com/image.jpg">
+                        <label>Image du challenge (optionnel)</label>
+                        <div style="margin-bottom: 8px;">
+                            <label style="display: inline-flex; align-items: center; margin-right: 15px;">
+                                <input type="radio" name="image-type" value="local" checked onchange="toggleImageInput()" style="width: auto; margin-right: 5px;">
+                                Fichier local (assets/)
+                            </label>
+                            <label style="display: inline-flex; align-items: center;">
+                                <input type="radio" name="image-type" value="url" onchange="toggleImageInput()" style="width: auto; margin-right: 5px;">
+                                URL externe
+                            </label>
+                        </div>
+                        <input type="text" id="edit-image" placeholder="exemple: gobelin.png">
                         <small style="color: #888; font-size: 10px; display: block; margin-top: 4px;">
-                            L'image sera affichée sous la description du challenge
+                            <span id="image-help-local">Entrez le nom du fichier dans le dossier assets/ (ex: gobelin.png)</span>
+                            <span id="image-help-url" style="display: none;">Entrez l'URL complète de l'image (ex: https://example.com/image.jpg)</span>
                         </small>
                     </div>
 
@@ -950,7 +961,26 @@
             document.getElementById('edit-icon').value = node.icon;
             document.getElementById('edit-color').value = node.color;
             document.getElementById('edit-dialogue').value = node.dialogue || '';
-            document.getElementById('edit-image').value = node.image || '';
+
+            // Détecter si l'image est une URL ou un fichier local
+            const imageValue = node.image || '';
+            if (imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
+                // URL externe
+                document.querySelector('input[name="image-type"][value="url"]').checked = true;
+                document.getElementById('edit-image').value = imageValue;
+            } else if (imageValue) {
+                // Fichier local
+                document.querySelector('input[name="image-type"][value="local"]').checked = true;
+                // Retirer le préfixe assets/ pour l'affichage
+                const displayValue = imageValue.startsWith('assets/') ? imageValue.substring(7) : imageValue;
+                document.getElementById('edit-image').value = displayValue;
+            } else {
+                // Pas d'image
+                document.querySelector('input[name="image-type"][value="local"]').checked = true;
+                document.getElementById('edit-image').value = '';
+            }
+            toggleImageInput();
+
             document.getElementById('edit-is-start').checked = node.isStart || false;
 
             // Update outcomes
@@ -1007,7 +1037,26 @@
             selectedNode.icon = document.getElementById('edit-icon').value;
             selectedNode.color = document.getElementById('edit-color').value;
             selectedNode.dialogue = document.getElementById('edit-dialogue').value;
-            selectedNode.image = document.getElementById('edit-image').value || undefined;
+
+            // Gérer l'image selon le type sélectionné
+            const imageInput = document.getElementById('edit-image').value.trim();
+            const imageType = document.querySelector('input[name="image-type"]:checked').value;
+
+            if (imageInput) {
+                if (imageType === 'local') {
+                    // Ajouter le préfixe assets/ si ce n'est pas déjà présent
+                    if (!imageInput.startsWith('assets/')) {
+                        selectedNode.image = 'assets/' + imageInput;
+                    } else {
+                        selectedNode.image = imageInput;
+                    }
+                } else {
+                    // URL externe, utiliser telle quelle
+                    selectedNode.image = imageInput;
+                }
+            } else {
+                selectedNode.image = undefined;
+            }
 
             const wasStart = selectedNode.isStart;
             selectedNode.isStart = document.getElementById('edit-is-start').checked;
@@ -1074,6 +1123,23 @@
             document.querySelectorAll('.emoji-btn').forEach(btn => {
                 btn.classList.toggle('selected', btn.textContent === emoji);
             });
+        }
+
+        function toggleImageInput() {
+            const imageType = document.querySelector('input[name="image-type"]:checked').value;
+            const imageInput = document.getElementById('edit-image');
+            const helpLocal = document.getElementById('image-help-local');
+            const helpUrl = document.getElementById('image-help-url');
+
+            if (imageType === 'local') {
+                imageInput.placeholder = 'exemple: gobelin.png';
+                helpLocal.style.display = 'inline';
+                helpUrl.style.display = 'none';
+            } else {
+                imageInput.placeholder = 'https://example.com/image.jpg';
+                helpLocal.style.display = 'none';
+                helpUrl.style.display = 'inline';
+            }
         }
 
         function updateStats() {
