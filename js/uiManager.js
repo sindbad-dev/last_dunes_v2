@@ -499,9 +499,11 @@ class UIManager {
         const imageContainer = document.getElementById('challenge-image');
         if (challengeData.image) {
             imageContainer.innerHTML = `<img src="${challengeData.image}" alt="${challengeData.name}">`;
+            imageContainer.style.display = 'flex';
         } else {
-            // Placeholder avec icône du challenge
-            imageContainer.innerHTML = `<div class="image-placeholder">${challengeData.icon}</div>`;
+            // Masquer le conteneur si pas d'image
+            imageContainer.innerHTML = '';
+            imageContainer.style.display = 'none';
         }
 
         // Afficher le dialogue

@@ -151,37 +151,40 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 }
 .hidden { display: none !important; }
 
-/* Challenge Header with Title and Image */
+/* Challenge Header with Title */
 .challenge-header-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 20px;
-    gap: 15px;
+    margin-bottom: 15px;
 }
 
+/* Challenge Image Container - positioned after dialogue */
 .challenge-image-container {
-    width: 250px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 3px solid #ffd700;
-    border-radius: 15px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 250px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    margin: 20px auto;
 }
 
 .challenge-image-container img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    max-height: 250px;
 }
 
 .image-placeholder {
-    font-size: 80px;
-    opacity: 0.8;
+    font-size: 60px;
+    opacity: 0.6;
 }
 
 .challenge-title-display {
