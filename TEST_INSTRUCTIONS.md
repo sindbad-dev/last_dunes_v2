@@ -4,8 +4,9 @@
 
 ### 1. **assets/gobelin-test.svg**
 - Image SVG de test avec le gobelin 👺
-- Dimensions: 400x250px
-- Couleurs: Thème sombre avec bordure dorée
+- Dimensions: 600x400px (taille optimale pour la lisibilité)
+- Effets: Dégradés, lueur, bordures dorées multiples
+- Style: Thème sombre avec visuels améliorés
 
 ### 2. **test-image.html**
 - Page de test dédiée pour vérifier le chargement des images
@@ -49,9 +50,10 @@ http://localhost:8000/index.html
 2. Quand vous rencontrez le premier challenge "Le Gobelin" 👺
 3. L'image `gobelin-test.svg` doit apparaître:
    - **Sous** la bulle de dialogue
-   - Avec des bordures dorées subtiles
-   - Taille maximale de 400px de large et 250px de haut
+   - Avec des bordures dorées subtiles et effets visuels
+   - Taille maximale de 600px de large et 400px de haut (plus grande et lisible)
    - Proportions préservées (object-fit: contain)
+   - Image centrée avec un bon contraste
 
 ### Test 3: Éditeur de challenges
 ```bash
@@ -132,10 +134,12 @@ if (challengeData.image) {
 
 ## Recommandations
 
-- **Dimensions recommandées:** 400x250px (ratio 16:10)
+- **Dimensions recommandées:** 600x400px (ratio 3:2) pour une meilleure lisibilité
+- **Dimensions maximales affichées:** 600px largeur × 400px hauteur
 - **Format recommandé:** SVG pour les illustrations, PNG pour les images avec transparence
 - **Taille de fichier:** < 500 KB pour des temps de chargement rapides
 - **Nom de fichier:** utiliser des noms descriptifs en minuscules sans espaces
+- **Conseil:** Les images plus grandes sont automatiquement redimensionnées en préservant les proportions
 
 ## Résultat final
 
