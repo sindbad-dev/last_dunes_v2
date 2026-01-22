@@ -252,6 +252,9 @@ class UIManager {
             card.className = 'card';
             card.dataset.cardType = cardType;
 
+            // Ajouter un tooltip avec le nom complet de la carte
+            card.title = cardDef.label;
+
             // Icône de la carte
             const icon = document.createElement('div');
             icon.className = 'card-icon';
@@ -340,6 +343,10 @@ class UIManager {
         card.className = 'card optional-card';
         card.dataset.cardType = 'optional_' + rewardCard.name;
         card.dataset.optionalName = rewardCard.name;
+
+        // Ajouter un tooltip avec la description complète
+        const tooltipText = `${rewardCard.label}\n\n${rewardCard.description}`;
+        card.title = tooltipText;
 
         // Icône de la carte
         const icon = document.createElement('div');

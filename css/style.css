@@ -318,12 +318,37 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     align-items: center;
     border: 2px solid #5a4a3a;
     text-align: center;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
 }
 
 .card:hover {
     transform: translateY(-10px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    z-index: 50;
+}
+
+/* Tooltip pour afficher la description complète au survol */
+.card:hover .card-description {
+    display: block;
+    position: absolute;
+    z-index: 100;
+    background: rgba(26, 26, 26, 0.98);
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #5a4a3a;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    max-width: 300px;
+    white-space: normal;
+    line-height: 1.5;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+    -webkit-line-clamp: unset;
+    max-height: none;
+    font-size: 12px;
 }
 
 .card-icon {
@@ -720,9 +745,10 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
 
 /* Carte optionnelle - style spécial */
 .optional-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4a5fd8 0%, #5a3b8a 100%);
     border: 2px solid #ffeb3b;
     color: #fff;
+    position: relative;
 }
 
 .optional-card h3,
@@ -730,16 +756,44 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     color: #fff;
 }
 
+/* Tooltip pour afficher le texte complet au survol */
+.optional-card:hover .card-description {
+    position: absolute;
+    z-index: 100;
+    background: rgba(26, 26, 26, 0.98);
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #ffeb3b;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    max-width: 300px;
+    white-space: normal;
+    -webkit-line-clamp: unset;
+    max-height: none;
+    line-height: 1.5;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+}
+
 /* Résultat optionnel dans l'aperçu */
 .result-item.result-optional {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(74, 95, 216, 0.3) 0%, rgba(90, 59, 138, 0.3) 100%);
     border: 2px solid #ffeb3b;
     border-left: 4px solid #ffeb3b;
+}
+
+.result-item.result-optional .result-label,
+.result-item.result-optional .result-text-preview {
+    color: #000;
 }
 
 .optional-badge {
     color: #ffeb3b;
     font-size: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
 /* Instruction pour utiliser le menu */
@@ -747,13 +801,18 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     text-align: center;
     margin-top: 20px;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 235, 59, 0.5);
+    border-radius: 8px;
     color: #ffeb3b;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(255, 235, 59, 0.2);
 }
 
 .menu-instruction p {
     margin: 0;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 /* Modal de résultat */
