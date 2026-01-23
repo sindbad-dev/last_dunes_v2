@@ -4,7 +4,7 @@
 
 ### 1. **assets/gobelin-test.svg**
 - Image SVG de test avec le gobelin 👺
-- Dimensions: 600x400px (taille optimale pour la lisibilité)
+- Dimensions: 750x500px (grande taille pour excellente lisibilité)
 - Effets: Dégradés, lueur, bordures dorées multiples
 - Style: Thème sombre avec visuels améliorés
 
@@ -51,7 +51,7 @@ http://localhost:8000/index.html
 3. L'image `gobelin-test.svg` doit apparaître:
    - **Sous** la bulle de dialogue
    - Avec des bordures dorées subtiles et effets visuels
-   - Taille maximale de 600px de large et 400px de haut (plus grande et lisible)
+   - **Taille maximale de 750px de large et 500px de haut (grande et très lisible)**
    - Proportions préservées (object-fit: contain)
    - Image centrée avec un bon contraste
 
@@ -134,8 +134,8 @@ if (challengeData.image) {
 
 ## Recommandations
 
-- **Dimensions recommandées:** 600x400px (ratio 3:2) pour une meilleure lisibilité
-- **Dimensions maximales affichées:** 600px largeur × 400px hauteur
+- **Dimensions recommandées:** 750x500px (ratio 3:2) pour une excellente lisibilité
+- **Dimensions maximales affichées:** 750px largeur × 500px hauteur
 - **Format recommandé:** SVG pour les illustrations, PNG pour les images avec transparence
 - **Taille de fichier:** < 500 KB pour des temps de chargement rapides
 - **Nom de fichier:** utiliser des noms descriptifs en minuscules sans espaces
