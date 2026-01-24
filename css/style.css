@@ -231,6 +231,11 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Cacher les résultats par défaut */
+.challenge-results-preview.hidden-results {
+    display: none;
+}
+
 .results-preview-title {
     margin: 0 0 15px 0;
     font-size: 18px;
@@ -822,6 +827,36 @@ body { margin: 0; background: #222; font-family: 'Courier New', monospace; color
     margin: 0;
     font-weight: bold;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Bouton pour révéler les résultats */
+.reveal-results-btn {
+    margin: 15px auto;
+    padding: 12px 25px;
+    background: rgba(255, 215, 0, 0.2);
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    color: #ffd700;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    font-family: 'Courier New', monospace;
+}
+
+.reveal-results-btn:hover {
+    background: rgba(255, 215, 0, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.reveal-results-btn:active {
+    transform: scale(0.95);
+}
+
+.reveal-results-btn.hidden {
+    display: none;
 }
 
 /* Modal de résultat */

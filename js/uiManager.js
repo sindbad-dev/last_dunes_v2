@@ -527,9 +527,17 @@ class UIManager {
     renderCards(challengeData, gameLogic) {
         this.cardsArea.innerHTML = '';
 
+        // Créer un bouton pour révéler les résultats
+        const revealButton = document.createElement('button');
+        revealButton.className = 'reveal-results-btn';
+        revealButton.textContent = '👁️ Révéler les résultats possibles';
+        revealButton.id = 'reveal-results-button';
+        this.cardsArea.appendChild(revealButton);
+
         // Créer la section d'aperçu des résultats
         const resultsPreview = document.createElement('div');
-        resultsPreview.className = 'challenge-results-preview';
+        resultsPreview.className = 'challenge-results-preview hidden-results';
+        resultsPreview.id = 'results-preview-section';
 
         const previewTitle = document.createElement('h3');
         previewTitle.textContent = UI_TEXT.POSSIBLE_OUTCOMES;
@@ -566,6 +574,11 @@ class UIManager {
         resultsPreview.appendChild(resultsList);
         this.cardsArea.appendChild(resultsPreview);
 
+        // Gestionnaire de clic pour le bouton de révélation
+        revealButton.addEventListener('click', () => {
+            this.revealResults();
+        });
+
         // Ajouter l'instruction pour utiliser le menu
         const instruction = document.createElement('div');
         instruction.className = 'menu-instruction';
@@ -574,11 +587,30 @@ class UIManager {
     }
 
     /**
+     * Révèle les résultats possibles du challenge
+     */
+    revealResults() {
+        const resultsSection = document.getElementById('results-preview-section');
+        const revealButton = document.getElementById('reveal-results-button');
+
+        if (resultsSection) {
+            resultsSection.classList.remove('hidden-results');
+        }
+
+        if (revealButton) {
+            revealButton.classList.add('hidden');
+        }
+    }
+
+    /**
      * Gestionnaire de sélection d'une carte standard
      * @param {string} cardType - Type de carte sélectionnée
      * @param {Object} cardDef - Définition de la carte
      */
     onCardSelected(cardType, cardDef) {
+        // Révéler les résultats automatiquement lors de la sélection d'une carte
+        this.revealResults();
+
         // Désactiver le deck
         this.disableDeck();
 
@@ -594,6 +626,9 @@ class UIManager {
      * @param {Object} rewardCard - Carte optionnelle sélectionnée
      */
     onOptionalCardSelected(rewardCard) {
+        // Révéler les résultats automatiquement lors de la sélection d'une carte
+        this.revealResults();
+
         // Désactiver le deck
         this.disableDeck();
 
