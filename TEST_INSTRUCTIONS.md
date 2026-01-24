@@ -4,7 +4,7 @@
 
 ### 1. **assets/gobelin-test.svg**
 - Image SVG de test avec le gobelin 👺
-- Dimensions: 750x500px (grande taille pour excellente lisibilité)
+- Dimensions: 550x370px (taille optimale pour lisibilité sans masquer l'interface)
 - Effets: Dégradés, lueur, bordures dorées multiples
 - Style: Thème sombre avec visuels améliorés
 
@@ -51,9 +51,10 @@ http://localhost:8000/index.html
 3. L'image `gobelin-test.svg` doit apparaître:
    - **Sous** la bulle de dialogue
    - Avec des bordures dorées subtiles et effets visuels
-   - **Taille maximale de 750px de large et 500px de haut (grande et très lisible)**
+   - **Taille de 550x370px (grande et lisible sans cacher les autres éléments)**
    - Proportions préservées (object-fit: contain)
    - Image centrée avec un bon contraste
+   - L'overlay est scrollable si nécessaire
 
 ### Test 3: Éditeur de challenges
 ```bash
@@ -134,12 +135,13 @@ if (challengeData.image) {
 
 ## Recommandations
 
-- **Dimensions recommandées:** 750x500px (ratio 3:2) pour une excellente lisibilité
-- **Dimensions maximales affichées:** 750px largeur × 500px hauteur
+- **Dimensions recommandées:** 550x370px (ratio ~3:2) pour équilibre entre lisibilité et interface
+- **Dimensions affichées:** 550px largeur × 370px hauteur (taille fixe)
 - **Format recommandé:** SVG pour les illustrations, PNG pour les images avec transparence
 - **Taille de fichier:** < 500 KB pour des temps de chargement rapides
 - **Nom de fichier:** utiliser des noms descriptifs en minuscules sans espaces
-- **Conseil:** Les images plus grandes sont automatiquement redimensionnées en préservant les proportions
+- **Conseil:** Les images respectent toujours object-fit: contain pour préserver les proportions
+- **Note:** L'overlay du challenge est scrollable pour garantir l'accessibilité à tous les éléments
 
 ## Résultat final
 
